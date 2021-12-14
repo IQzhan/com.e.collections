@@ -1,0 +1,15 @@
+{
+  "name": "com.e.template",
+  "displayName": "Template",
+  "description": "",
+  "version": "1.0.7",
+  "unity": "2019.3",
+  "license": "MIT",
+  "keywords": [
+    "template"
+  ],
+  "author": {
+    "name": "ZhanQI"
+  },
+  "hideInEditor": false
+}
