@@ -102,7 +102,7 @@ namespace E.Collections.Unsafe
         }
 
         /// <summary>
-        /// Get no thread safe.
+        /// Get value no thread safe.
         /// </summary>
         /// <param name="index"></param>
         /// <returns></returns>
@@ -111,6 +111,7 @@ namespace E.Collections.Unsafe
             get
             {
                 CheckExists();
+                CheckIndexNoLock(index);
                 return m_Head->data[index] + m_Head->preSize;
             }
         }
@@ -157,17 +158,64 @@ namespace E.Collections.Unsafe
         }
 
         /// <summary>
-        /// Get by index thread safe.
+        /// Get key by index thread safe.
         /// </summary>
         /// <param name="index"></param>
         /// <returns></returns>
-        public byte* GetByIndex(int index)
+        public Key GetKeyByIndex(int index)
         {
             CheckExists();
             Lock();
-            byte* result = m_Head->data[index] + m_Head->preSize;
+            CheckIndex(index);
+            Key key = ((Node*)m_Head->data[index])->key;
             Unlock();
-            return result;
+            return key;
+        }
+
+        /// <summary>
+        /// Get value by index thread safe.
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns></returns>
+        public byte* GetValueByIndex(int index)
+        {
+            CheckExists();
+            Lock();
+            CheckIndex(index);
+            byte* value = m_Head->data[index] + m_Head->preSize;
+            Unlock();
+            return value;
+        }
+
+        /// <summary>
+        /// Get key & value by index thread safe.
+        /// </summary>
+        /// <param name="index"></param>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        public void GetKeyValueByIndex(int index, out Key key, out byte* value)
+        {
+            CheckExists();
+            Lock();
+            CheckIndex(index);
+            byte* node = m_Head->data[index];
+            key = ((Node*)node)->key;
+            value = node + m_Head->preSize;
+            Unlock();
+        }
+
+        /// <summary>
+        /// Get key by value thread safe.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public Key GetKeyByValue(byte* value)
+        {
+            CheckExists();
+            Lock();
+            Key key = ((Node*)(value - m_Head->preSize))->key;
+            Unlock();
+            return key;
         }
 
         private bool TryGetNode(Key key, out Node* node)
@@ -752,6 +800,29 @@ namespace E.Collections.Unsafe
             if (m_Head == null)
             {
                 throw new NullReferenceException($"{nameof(UnsafeChunkedSet<Key>)} is yet created or already disposed.");
+            }
+#endif
+        }
+
+        [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
+        private void CheckIndex(int index)
+        {
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            if (index < 0 || index >= m_Head->data.Count)
+            {
+                Unlock();
+                throw new IndexOutOfRangeException($"{nameof(UnsafeChunkedList)} index must >= 0 && < Count.");
+            }
+#endif
+        }
+
+        [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
+        private void CheckIndexNoLock(int index)
+        {
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            if (index < 0 || index >= m_Head->data.Count)
+            {
+                throw new IndexOutOfRangeException($"{nameof(UnsafeChunkedList)} index must >= 0 && < Count.");
             }
 #endif
         }
