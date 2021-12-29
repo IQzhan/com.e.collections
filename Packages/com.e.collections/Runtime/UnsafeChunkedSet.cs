@@ -811,7 +811,7 @@ namespace E.Collections.Unsafe
             if (index < 0 || index >= m_Head->data.Count)
             {
                 Unlock();
-                throw new IndexOutOfRangeException($"{nameof(UnsafeChunkedList)} index must >= 0 && < Count.");
+                throw new IndexOutOfRangeException($"{nameof(UnsafeChunkedSet<Key>)} index must >= 0 && < Count.");
             }
 #endif
         }
@@ -822,7 +822,7 @@ namespace E.Collections.Unsafe
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             if (index < 0 || index >= m_Head->data.Count)
             {
-                throw new IndexOutOfRangeException($"{nameof(UnsafeChunkedList)} index must >= 0 && < Count.");
+                throw new IndexOutOfRangeException($"{nameof(UnsafeChunkedSet<Key>)} index must >= 0 && < Count.");
             }
 #endif
         }

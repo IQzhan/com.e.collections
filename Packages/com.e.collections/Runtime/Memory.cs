@@ -60,19 +60,19 @@ namespace E.Collections.Unsafe
             return UnsafeUtility.Malloc(size, alignment, allocator);
         }
 
-        public static void Free(void* memory, Allocator allocator)
+        public static void Free(void* ptr, Allocator allocator)
         {
-            UnsafeUtility.Free(memory, allocator);
+            UnsafeUtility.Free(ptr, allocator);
         }
 
         public static int SizeOf<T>() where T : struct
         {
-            return UnsafeUtility.SizeOf<T>();
+            return Marshal.SizeOf<T>();
         }
 
         public static int SizeOf(Type type)
         {
-            return UnsafeUtility.SizeOf(type);
+            return Marshal.SizeOf(type);
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -86,13 +86,53 @@ namespace E.Collections.Unsafe
 
         public static int AlignOf<T>() where T : struct
         {
-            return UnsafeUtility.SizeOf<AlignOfHelper<T>>() - UnsafeUtility.SizeOf<T>();
+            return Marshal.SizeOf<AlignOfHelper<T>>() - Marshal.SizeOf<T>();
         }
 
         public static int AlignOf(Type type)
         {
             Type helper = alignOfHelperType.MakeGenericType(type);
-            return UnsafeUtility.SizeOf(helper) - UnsafeUtility.SizeOf(type);
+            return Marshal.SizeOf(helper) - Marshal.SizeOf(type);
+        }
+
+        public static object PtrToStructure(void* ptr, Type structureType)
+        {
+            return Marshal.PtrToStructure((IntPtr)ptr, structureType);
+        }
+
+        public static object PtrToStructure(IntPtr ptr, Type structureType)
+        {
+            return Marshal.PtrToStructure(ptr, structureType);
+        }
+
+        public static T PtrToStructure<T>(void* ptr)
+        {
+            return Marshal.PtrToStructure<T>((IntPtr)ptr);
+        }
+
+        public static T PtrToStructure<T>(IntPtr ptr)
+        {
+            return Marshal.PtrToStructure<T>(ptr);
+        }
+
+        public static void StructureToPtr(object structure, void* ptr, bool fDeleteOld)
+        {
+            Marshal.StructureToPtr(structure, (IntPtr)ptr, fDeleteOld);
+        }
+
+        public static void StructureToPtr(object structure, IntPtr ptr, bool fDeleteOld)
+        {
+            Marshal.StructureToPtr(structure, ptr, fDeleteOld);
+        }
+
+        public static void StructureToPtr<T>(T structure, void* ptr, bool fDeleteOld)
+        {
+            Marshal.StructureToPtr(structure, (IntPtr)ptr, fDeleteOld);
+        }
+
+        public static void StructureToPtr<T>(T structure, IntPtr ptr, bool fDeleteOld)
+        {
+            Marshal.StructureToPtr(structure, ptr, fDeleteOld);
         }
     }
 }
