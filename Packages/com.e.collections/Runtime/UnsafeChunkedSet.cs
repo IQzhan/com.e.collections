@@ -2,7 +2,6 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 using Unity.Collections;
-using Unity.Collections.LowLevel.Unsafe;
 
 namespace E.Collections.Unsafe
 {
@@ -276,14 +275,14 @@ namespace E.Collections.Unsafe
                     return res;
                 }
             }
-            //³õÊ¼»¯ºìÉ«½Úµã
+            //åˆå§‹åŒ–çº¢è‰²èŠ‚ç‚¹
             node = Malloc();
             node->key = key;
             node->color = Color.Red;
             node->left = node->right = null;
             node->parent = parent;
             res = (byte*)node + m_Head->preSize;
-            //Óë¸¸Á¬½Ó
+            //ä¸çˆ¶è¿æ¥
             if (m_Head->root == null)
             {
                 m_Head->root = node;
@@ -296,7 +295,7 @@ namespace E.Collections.Unsafe
             {
                 parent->right = node;
             }
-            //½«ÆÕÍ¨¶ş²æÊ÷ĞŞÕıÎªºìºÚÊ÷
+            //å°†æ™®é€šäºŒå‰æ ‘ä¿®æ­£ä¸ºçº¢é»‘æ ‘
             AddFixup(node);
             Unlock();
             return res;
@@ -337,55 +336,32 @@ namespace E.Collections.Unsafe
                 Unlock();
                 return;
             }
-            Node* forReplace = toDelete;
-            // Èç¹ûÁ½¸ö×Ó½Úµã£¬¾ÍÕÒµ½ÓÒ×ÓÊ÷ÖĞ×îĞ¡µÄ½áµã£¬½«Ö®´úÌæ
-            if (toDelete->left != null && toDelete->right != null)
+            Node* forReplace = null;
+            bool hasLeft, hasRight;
+            while ((hasLeft = toDelete->left != null) | (hasRight = toDelete->right != null))
             {
-                forReplace = FindMin(toDelete->right);
-                // ÕâÀïÖ»¶ÔÖµ½øĞĞ¸´ÖÆ£¬²¢²»¸´ÖÆÑÕÉ«£¬ÒÔÃâÆÆ»µºìºÚÊ÷µÄĞÔÖÊ
-                toDelete->key = forReplace->key;
-                UnsafeUtility.MemCpy((byte*)toDelete + m_Head->preSize, (byte*)forReplace + m_Head->preSize, m_Head->valueSize);
-                // Èç¹ûÊÇºìÉ«ÔòÎªÄ©Î²£¬Èç¹ûÊÇºÚÉ«Ôò»¹¿ÉÄÜÓĞÒ»¸öºì×Ó½Úµã£¬Ğè¼ÌĞøÌæ»»
-                toDelete = forReplace;
-            }
-            bool hasLeft = toDelete->left != null;
-            bool hasRight = toDelete->right != null;
-            if (!hasLeft && hasRight)
-            {
-                // ½ÚµãÎªºÚ,ÇÒÖ»ÓĞºìÓÒ×Ó½Úµã
-                forReplace = toDelete->right;
-            }
-            else if (hasLeft && !hasRight)
-            {
-                // ½ÚµãÎªºÚ£¬ÇÒÖ»ÓĞºì×ó×Ó½Úµã
-                forReplace = toDelete->left;
-            }
-            // ½»»»forReplaceºÍtoDelete
-            if (forReplace != toDelete)
-            {
-                forReplace->parent = toDelete->parent;
-                forReplace->color = Color.Black;
-                toDelete->color = Color.Red;
-                if (toDelete->parent != null)
+                // å¦‚æœä¸¤ä¸ªå­èŠ‚ç‚¹
+                if (hasLeft && hasRight)
                 {
-                    if (toDelete == toDelete->parent->left)
-                    {
-                        toDelete->parent->left = forReplace;
-                    }
-                    else
-                    {
-                        toDelete->parent->right = forReplace;
-                    }
-                    toDelete->parent = null;
+                    //æ‰¾åˆ°å³å­æ ‘ä¸­æœ€å°çš„ç»“ç‚¹
+                    forReplace = FindMin(toDelete->right);
                 }
-                else
+                // èŠ‚ç‚¹ä¸ºé»‘ï¼Œä¸”åªæœ‰çº¢å³å­èŠ‚ç‚¹
+                else if (!hasLeft && hasRight)
                 {
-                    m_Head->root = forReplace;
+                    forReplace = toDelete->right;
                 }
+                // èŠ‚ç‚¹ä¸ºé»‘ï¼Œä¸”åªæœ‰çº¢å·¦å­èŠ‚ç‚¹
+                else if (hasLeft && !hasRight)
+                {
+                    forReplace = toDelete->left;
+                }
+                // äº¤æ¢èŠ‚ç‚¹ä½ç½®ï¼Œå¹¶ä¿è¯é¢œè‰²åœ¨ä½ç½®ä¸Šä¸å˜
+                SwapUpDown(toDelete, forReplace);
             }
-            // ĞŞÕıºìºÚÊ÷
+            // ä¿®æ­£çº¢é»‘æ ‘ï¼Œçº¢è‰²è·³è¿‡
             RemoveFixup(toDelete);
-            // ÊÍ·Å
+            // é‡Šæ”¾
             Free(toDelete);
             Unlock();
         }
@@ -432,14 +408,14 @@ namespace E.Collections.Unsafe
                 inserted->color = Color.Black;
                 return;
             }
-            // ¸¸ÎªºìÉ«Ê±²ÅĞèÒªµ÷Õû
+            // çˆ¶ä¸ºçº¢è‰²æ—¶æ‰éœ€è¦è°ƒæ•´
             while (inserted->parent != null && inserted->parent->color == Color.Red)
             {
-                // ¸¸½áµãÊÇ×æ¸¸½áµãµÄ×ó×Ó
+                // çˆ¶ç»“ç‚¹æ˜¯ç¥–çˆ¶ç»“ç‚¹çš„å·¦å­
                 if (inserted->parent == inserted->parent->parent->left)
                 {
                     Node* uncle = inserted->parent->parent->right;
-                    // Êåºì
+                    // å”çº¢
                     if (uncle != null && uncle->color == Color.Red)
                     {
                         inserted->parent->color = Color.Black;
@@ -447,16 +423,16 @@ namespace E.Collections.Unsafe
                         inserted->parent->parent->color = Color.Red;
                         inserted = inserted->parent->parent;
                     }
-                    // ÊåºÚ
+                    // å”é»‘
                     else
                     {
-                        // µ±Ç°½áµãÊÇ¸¸½áµãµÄÓÒ×Ó
+                        // å½“å‰ç»“ç‚¹æ˜¯çˆ¶ç»“ç‚¹çš„å³å­
                         if (inserted == inserted->parent->right)
                         {
                             inserted = inserted->parent;
                             LeftRotate(inserted);
                         }
-                        // µ±Ç°½áµãÊÇ¸¸½áµãµÄ×ó×Ó
+                        // å½“å‰ç»“ç‚¹æ˜¯çˆ¶ç»“ç‚¹çš„å·¦å­
                         else
                         {
                             inserted->parent->color = Color.Black;
@@ -465,11 +441,11 @@ namespace E.Collections.Unsafe
                         }
                     }
                 }
-                // ¸¸½áµãÊÇ×æ¸¸½áµãµÄÓÒ×Ó
+                // çˆ¶ç»“ç‚¹æ˜¯ç¥–çˆ¶ç»“ç‚¹çš„å³å­
                 else
                 {
                     Node* uncle = inserted->parent->parent->left;
-                    // Êåºì
+                    // å”çº¢
                     if (uncle != null && uncle->color == Color.Red)
                     {
                         inserted->parent->color = Color.Black;
@@ -477,16 +453,16 @@ namespace E.Collections.Unsafe
                         inserted->parent->parent->color = Color.Red;
                         inserted = inserted->parent->parent;
                     }
-                    // ÊåºÚ
+                    // å”é»‘
                     else
                     {
-                        // µ±Ç°½áµãÊÇ¸¸½áµãµÄ×ó×Ó
+                        // å½“å‰ç»“ç‚¹æ˜¯çˆ¶ç»“ç‚¹çš„å·¦å­
                         if (inserted == inserted->parent->left)
                         {
                             inserted = inserted->parent;
                             RightRotate(inserted);
                         }
-                        // µ±Ç°½áµãÊÇ¸¸½áµãµÄÓÒ×Ó
+                        // å½“å‰ç»“ç‚¹æ˜¯çˆ¶ç»“ç‚¹çš„å³å­
                         else
                         {
                             inserted->parent->color = Color.Black;
@@ -496,8 +472,90 @@ namespace E.Collections.Unsafe
                     }
                 }
             }
-            // ¸ùÎªºÚ
+            // æ ¹ä¸ºé»‘
             m_Head->root->color = Color.Black;
+        }
+
+        private void SwapUpDown(Node* up, Node* down)
+        {
+            Color c = up->color;
+            up->color = down->color;
+            down->color = c;
+
+            //swap parent
+            Node* swap = down->parent;
+            down->parent = up->parent;
+            up->parent = swap;
+            if (up->parent != null)
+            {
+                if (up->parent == up)
+                {
+                    up->parent = down;
+                }
+                else if (up->parent->left == down)
+                {
+                    up->parent->left = up;
+                }
+                else
+                {
+                    up->parent->right = up;
+                }
+            }
+            if (down->parent != null)
+            {
+                if (down->parent->left == up)
+                {
+                    down->parent->left = down;
+                }
+                else
+                {
+                    down->parent->right = down;
+                }
+            }
+            else
+            {
+                m_Head->root = down;
+            }
+
+            //swap left
+            swap = down->left;
+            down->left = up->left;
+            up->left = swap;
+            if (up->left != null)
+            {
+                up->left->parent = up;
+            }
+            if (down->left != null)
+            {
+                if (down->left == down)
+                {
+                    down->left = up;
+                }
+                else
+                {
+                    down->left->parent = down;
+                }
+            }
+
+            //swap right
+            swap = down->right;
+            down->right = up->right;
+            up->right = swap;
+            if (up->right != null)
+            {
+                up->right->parent = up;
+            }
+            if (down->right != null)
+            {
+                if (down->right == down)
+                {
+                    down->right = up;
+                }
+                else
+                {
+                    down->right->parent = down;
+                }
+            }
         }
 
         private void RemoveFixup(Node* node)
@@ -508,26 +566,26 @@ namespace E.Collections.Unsafe
             }
             while (node != m_Head->root)
             {
-                // nodeÊÇºÚÉ«ÎŞ×Ó½ÚµãÇÒÓĞĞÖµÜ£¬´ËÊ±¼Ù×°node == null
+                // nodeæ˜¯é»‘è‰²æ— å­èŠ‚ç‚¹ä¸”æœ‰å…„å¼Ÿï¼Œæ­¤æ—¶å‡è£…node == null
                 if (node == node->parent->right)
-                // ĞÖÔÚ×ó
+                // å…„åœ¨å·¦
                 {
                     Node* bro = node->parent->left;
                     if (bro->color == Color.Black)
                     {
-                        // ĞÖºÚ
+                        // å…„é»‘
                         bool broLBlack = bro->left == null || (bro->left->color == Color.Black);
                         bool broRBlack = bro->right == null || (bro->right->color == Color.Black);
-                        // ĞÖ×ÓÈ«ºÚ
+                        // å…„å­å…¨é»‘
                         if (broLBlack && broRBlack)
                         {
-                            // ¸¸ºÚ
+                            // çˆ¶é»‘
                             if (node->parent->color == Color.Black)
                             {
                                 bro->color = Color.Red;
                                 node = node->parent;
                             }
-                            // ¸¸ºì
+                            // çˆ¶çº¢
                             else
                             {
                                 bro->color = Color.Red;
@@ -535,17 +593,17 @@ namespace E.Collections.Unsafe
                                 break;
                             }
                         }
-                        // ĞÖ×Ó²»È«ºÚ
+                        // å…„å­ä¸å…¨é»‘
                         else
                         {
-                            // ĞÖ×ó×ÓºÚ
+                            // å…„å·¦å­é»‘
                             if (broLBlack)
                             {
                                 bro->color = Color.Red;
                                 bro->right->color = Color.Black;
                                 LeftRotate(bro);
                             }
-                            // ĞÖ×ó×Óºì
+                            // å…„å·¦å­çº¢
                             else
                             {
                                 Color c = node->parent->color;
@@ -557,7 +615,7 @@ namespace E.Collections.Unsafe
                             }
                         }
                     }
-                    // ĞÖºì£¬ÔòĞÖÒ»¶¨ÓĞ×Ó½Úµã
+                    // å…„çº¢ï¼Œåˆ™å…„ä¸€å®šæœ‰å­èŠ‚ç‚¹
                     else
                     {
                         RightRotate(node->parent);
@@ -565,25 +623,25 @@ namespace E.Collections.Unsafe
                         bro->color = Color.Black;
                     }
                 }
-                // ĞÖÔÚÓÒ
+                // å…„åœ¨å³
                 else
                 {
                     Node* bro = node->parent->right;
-                    // ĞÖºÚ
+                    // å…„é»‘
                     if (bro->color == Color.Black)
                     {
                         bool broLBlack = bro->left == null || (bro->left->color == Color.Black);
                         bool broRBlack = bro->right == null || (bro->right->color == Color.Black);
-                        // ĞÖ×ÓÈ«ºÚ
+                        // å…„å­å…¨é»‘
                         if (broLBlack && broRBlack)
                         {
-                            // ¸¸ºÚ
+                            // çˆ¶é»‘
                             if (node->parent->color == Color.Black)
                             {
                                 bro->color = Color.Red;
                                 node = node->parent;
                             }
-                            // ¸¸ºì
+                            // çˆ¶çº¢
                             else
                             {
                                 bro->color = Color.Red;
@@ -591,17 +649,17 @@ namespace E.Collections.Unsafe
                                 break;
                             }
                         }
-                        // ĞÖ×Ó²»È«ºÚ
+                        // å…„å­ä¸å…¨é»‘
                         else
                         {
-                            // ĞÖÓÒ×ÓºÚ
+                            // å…„å³å­é»‘
                             if (broRBlack)
                             {
                                 bro->color = Color.Red;
                                 bro->left->color = Color.Black;
                                 RightRotate(bro);
                             }
-                            // ĞÖÓÒ×Óºì
+                            // å…„å³å­çº¢
                             else
                             {
                                 Color c = node->parent->color;
@@ -613,7 +671,7 @@ namespace E.Collections.Unsafe
                             }
                         }
                     }
-                    // ĞÖºì£¬ÔòĞÖÒ»¶¨ÓĞ×Ó½Úµã
+                    // å…„çº¢ï¼Œåˆ™å…„ä¸€å®šæœ‰å­èŠ‚ç‚¹
                     else
                     {
                         LeftRotate(node->parent);
@@ -622,7 +680,7 @@ namespace E.Collections.Unsafe
                     }
                 }
             }
-            // ¸ù½Úµã±ØĞëÊÇºÚ
+            // æ ¹èŠ‚ç‚¹å¿…é¡»æ˜¯é»‘
             m_Head->root->color = Color.Black;
         }
 
@@ -708,7 +766,7 @@ namespace E.Collections.Unsafe
         }
 
         /// <summary>
-        /// ÇëÇóµØÖ·
+        /// è¯·æ±‚åœ°å€
         /// </summary>
         /// <returns></returns>
         private Node* Malloc()
@@ -720,12 +778,12 @@ namespace E.Collections.Unsafe
         }
 
         /// <summary>
-        /// ÊÍ·ÅµØÖ·
+        /// é‡Šæ”¾åœ°å€
         /// </summary>
         /// <param name="node"></param>
         private void Free(Node* node)
         {
-            // ½â³ı¸¸Á¬½Ó
+            // è§£é™¤çˆ¶è¿æ¥
             if (node == m_Head->root)
             {
                 m_Head->root = null;
@@ -742,36 +800,36 @@ namespace E.Collections.Unsafe
                 }
             }
             int index = node->index;
-            // ÊÇ×îºóÒ»¸öelement
+            // æ˜¯æœ€åä¸€ä¸ªelement
             if (index == m_Head->data.Count - 1)
             {
-                // Ö±½ÓÒÆ³ı
+                // ç›´æ¥ç§»é™¤
                 m_Head->data.RemoveLast();
             }
-            // ²»ÊÇ×îºóÒ»¸öelement
+            // ä¸æ˜¯æœ€åä¸€ä¸ªelement
             else
             {
-                // ½«×îºóÒ»¸öelementÒÆ¶¯µ½node
+                // å°†æœ€åä¸€ä¸ªelementç§»åŠ¨åˆ°node
                 m_Head->data.SwapLastAndRemove(index);
-                // ÏÂ±êÉèÖÃÎªµ±Ç°nodeÏÂ±ê
+                // ä¸‹æ ‡è®¾ç½®ä¸ºå½“å‰nodeä¸‹æ ‡
                 node->index = index;
-                // ÓÉÓÚ×îºóµÄelementµØÖ·±äÎªnode£¬ĞèÒªÖØĞÂÁ¬½Ó¸¸×Ó½áµã
-                // ÊÇ¸ù½Úµã
+                // ç”±äºæœ€åçš„elementåœ°å€å˜ä¸ºnodeï¼Œéœ€è¦é‡æ–°è¿æ¥çˆ¶å­ç»“ç‚¹
+                // æ˜¯æ ¹èŠ‚ç‚¹
                 if (node->parent == null)
                 {
                     m_Head->root = node;
                 }
-                // ÊÇ¸¸½ÚµãµÄ×ó×Ó½Úµã
+                // æ˜¯çˆ¶èŠ‚ç‚¹çš„å·¦å­èŠ‚ç‚¹
                 else if (node->key.CompareTo(node->parent->key) < 0)
                 {
                     node->parent->left = node;
                 }
-                // ÊÇ¸¸½ÚµãµÄÓÒ×Ó½Úµã
+                // æ˜¯çˆ¶èŠ‚ç‚¹çš„å³å­èŠ‚ç‚¹
                 else
                 {
                     node->parent->right = node;
                 }
-                // ÖØÁ¬½Ó×Ó½Úµã
+                // é‡è¿æ¥å­èŠ‚ç‚¹
                 if (node->left != null)
                 {
                     node->left->parent = node;
@@ -811,7 +869,7 @@ namespace E.Collections.Unsafe
             if (index < 0 || index >= m_Head->data.Count)
             {
                 Unlock();
-                throw new IndexOutOfRangeException($"{nameof(UnsafeChunkedList)} index must >= 0 && < Count.");
+                throw new IndexOutOfRangeException($"{nameof(UnsafeChunkedSet<Key>)} index must >= 0 && < Count.");
             }
 #endif
         }
@@ -822,7 +880,7 @@ namespace E.Collections.Unsafe
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             if (index < 0 || index >= m_Head->data.Count)
             {
-                throw new IndexOutOfRangeException($"{nameof(UnsafeChunkedList)} index must >= 0 && < Count.");
+                throw new IndexOutOfRangeException($"{nameof(UnsafeChunkedSet<Key>)} index must >= 0 && < Count.");
             }
 #endif
         }
