@@ -1,6 +1,7 @@
 using E.Collections.Unsafe;
 using NUnit.Framework;
 using Unity.Collections;
+using Unity.Jobs;
 using UnityEngine;
 
 namespace E.Collections.Test
@@ -91,6 +92,84 @@ namespace E.Collections.Test
                 {
                     array.Dispose();
                 }
+            }
+        }
+
+        [Test]
+        public void TestUnsafeChunkedSetJob()
+        {
+            int valueSize = Memory.SizeOf<int>();
+            using (UnsafeChunkedSet<int> tree = new UnsafeChunkedSet<int>(valueSize, 1 << 16, Allocator.Temp))
+            {
+                NativeArray<int> array = default;
+                try
+                {
+                    int count = 10000;
+                    array = new NativeArray<int>(count, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+                    var setJob = new SetJob0()
+                    {
+                        array = array,
+                        set = tree,
+                        count = count
+                    };
+                    var setJob1 = new SetJob1()
+                    {
+                        array = array,
+                        set = tree
+                    };
+                    for (int i = 0; i < count; i++)
+                    {
+                        array[i] = Random.Range(0, count + 1);
+                    }
+                    JobHandle jobHandle = setJob.Schedule(count, 32);
+                    jobHandle.Complete();
+                    for (int i = 0; i < tree.Count; i++)
+                    {
+                        array[i] = *(int*)tree[i];
+                    }
+                    int treeCount = tree.Count;
+                    JobHandle jobHandle1 = setJob1.Schedule(treeCount, 32);
+                    jobHandle1.Complete();
+                }
+                catch
+                {
+                    throw;
+                }
+                finally
+                {
+                    array.Dispose();
+                }
+            }
+        }
+
+        //[BurstCompile]
+        struct SetJob0 : IJobParallelFor
+        {
+            public UnsafeChunkedSet<int> set;
+
+            public NativeArray<int> array;
+
+            public int count;
+
+            public void Execute(int index)
+            {
+                *(int*)set.Set(array[index]) = array[index];
+            }
+        }
+
+        struct SetJob1 : IJobParallelFor
+        {
+            public UnsafeChunkedSet<int> set;
+
+            public NativeArray<int> array;
+
+            public void Execute(int index)
+            {
+                int key = array[index];
+                Assert.AreEqual(true, set.Contains(key));
+                set.Remove(key);
+                Assert.AreEqual(false, set.Contains(key));
+                set.Check();
             }
         }
     }
