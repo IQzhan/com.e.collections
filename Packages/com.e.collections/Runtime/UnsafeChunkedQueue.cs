@@ -24,6 +24,7 @@ namespace E.Collections.Unsafe
             public byte** chunks;
         }
 
+        [NativeDisableUnsafePtrRestriction]
         private Head* m_Head;
 
         private const int ExpendCount = 32;
@@ -69,7 +70,10 @@ namespace E.Collections.Unsafe
             get
             {
                 CheckExists();
-                return m_Head->elementCount;
+                Lock();
+                int count = m_Head->elementCount;
+                Unlock();
+                return count;
             }
         }
 
@@ -87,7 +91,10 @@ namespace E.Collections.Unsafe
             get
             {
                 CheckExists();
-                return m_Head->chunkCount;
+                Lock();
+                int count = m_Head->chunkCount;
+                Unlock();
+                return count;
             }
         }
 
@@ -169,6 +176,7 @@ namespace E.Collections.Unsafe
         /// <param name="count"></param>
         public void Extend(int count)
         {
+            CheckExists();
             Lock();
             InternalExtend(count);
             Unlock();

@@ -23,6 +23,7 @@ namespace E.Collections.Unsafe
             public byte** chunks;
         }
 
+        [NativeDisableUnsafePtrRestriction]
         private Head* m_Head;
 
         private const int ExpendCount = 32;
@@ -67,7 +68,10 @@ namespace E.Collections.Unsafe
             get
             {
                 CheckExists();
-                return m_Head->elementCount;
+                Lock();
+                int count = m_Head->elementCount;
+                Unlock();
+                return count;
             }
         }
 
@@ -85,7 +89,10 @@ namespace E.Collections.Unsafe
             get
             {
                 CheckExists();
-                return m_Head->chunkCount;
+                Lock();
+                int count = m_Head->chunkCount;
+                Unlock();
+                return count;
             }
         }
 
@@ -220,9 +227,36 @@ namespace E.Collections.Unsafe
         /// <param name="count"></param>
         public void Extend(int count)
         {
+            CheckExists();
             Lock();
             InternalExtend(count);
             Unlock();
+        }
+
+        /// <summary>
+        /// Clear safe.
+        /// </summary>
+        public void Clear()
+        {
+            CheckExists();
+            Lock();
+            m_Head->elementCount = 0;
+            Unlock();
+        }
+
+        /// <summary>
+        /// Dispose.
+        /// </summary>
+        public void Dispose()
+        {
+            CheckExists();
+            for (int i = 0; i < m_Head->chunkCount; i++)
+            {
+                Memory.Free(*(m_Head->chunks + i), m_Head->allocator);
+            }
+            Memory.Free(m_Head->chunks, m_Head->allocator);
+            Memory.Free(m_Head, m_Head->allocator);
+            m_Head = null;
         }
 
         internal void InternalExtend(int count)
@@ -250,32 +284,6 @@ namespace E.Collections.Unsafe
             }
             m_Head->chunkCount = targetChunkCount;
             m_Head->maxElementCount = targetChunkCount * m_Head->elementCountInChunk;
-        }
-
-        /// <summary>
-        /// Clear safe.
-        /// </summary>
-        public void Clear()
-        {
-            CheckExists();
-            Lock();
-            m_Head->elementCount = 0;
-            Unlock();
-        }
-
-        /// <summary>
-        /// Dispose.
-        /// </summary>
-        public void Dispose()
-        {
-            CheckExists();
-            for (int i = 0; i < m_Head->chunkCount; i++)
-            {
-                Memory.Free(*(m_Head->chunks + i), m_Head->allocator);
-            }
-            Memory.Free(m_Head->chunks, m_Head->allocator);
-            Memory.Free(m_Head, m_Head->allocator);
-            m_Head = null;
         }
 
         /// <summary>
