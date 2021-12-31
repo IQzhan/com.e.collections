@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 
 namespace E.Collections.Unsafe
 {
@@ -38,6 +39,7 @@ namespace E.Collections.Unsafe
             public Key key;
         }
 
+        [NativeDisableUnsafePtrRestriction]
         private Head* m_Head;
 
         public bool IsCreated => m_Head != null;
@@ -47,7 +49,10 @@ namespace E.Collections.Unsafe
             get
             {
                 CheckExists();
-                return m_Head->data.Count;
+                Lock();
+                int count = m_Head->data.Count;
+                Unlock();
+                return count;
             }
         }
 
@@ -65,7 +70,10 @@ namespace E.Collections.Unsafe
             get
             {
                 CheckExists();
-                return m_Head->data.ChunkCount;
+                Lock();
+                int count = m_Head->data.ChunkCount;
+                Unlock();
+                return count;
             }
         }
 
@@ -890,11 +898,13 @@ namespace E.Collections.Unsafe
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             CheckExists();
+            Lock();
             int pathBlackCount = GetPathBlackCount(m_Head->root);
             if (pathBlackCount == 0)
             {
                 throw new Exception("This is not a red-black-tree.");
             }
+            Unlock();
 #endif
         }
 

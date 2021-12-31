@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 
 namespace E.Collections.Unsafe
 {
@@ -16,6 +17,7 @@ namespace E.Collections.Unsafe
             public int lockedMark;
         }
 
+        [NativeDisableUnsafePtrRestriction]
         private Head* m_Head;
 
         public bool IsCreated => m_Head != null;
@@ -25,7 +27,10 @@ namespace E.Collections.Unsafe
             get
             {
                 CheckExists();
-                return m_Head->list.Count;
+                Lock();
+                int count = m_Head->list.Count;
+                Unlock();
+                return count;
             }
         }
 
@@ -43,7 +48,10 @@ namespace E.Collections.Unsafe
             get
             {
                 CheckExists();
-                return m_Head->list.ChunkCount;
+                Lock();
+                int count = m_Head->list.ChunkCount;
+                Unlock();
+                return count;
             }
         }
 
@@ -166,7 +174,10 @@ namespace E.Collections.Unsafe
         public bool Contains(Key key)
         {
             CheckExists();
-            return BinarySearch(key, out int _);
+            Lock();
+            bool contains = BinarySearch(key, out int _);
+            Unlock();
+            return contains;
         }
 
         /// <summary>
@@ -177,11 +188,38 @@ namespace E.Collections.Unsafe
         public int IndexOf(Key key)
         {
             CheckExists();
+            Lock();
             if (BinarySearch(key, out int index))
             {
+                Unlock();
                 return index;
             }
+            Unlock();
             return -1;
+        }
+
+        public void Clear()
+        {
+            CheckExists();
+            Lock();
+            m_Head->list.Clear();
+            Unlock();
+        }
+
+        public void Extend(int count)
+        {
+            CheckExists();
+            Lock();
+            m_Head->list.Extend(count);
+            Unlock();
+        }
+
+        public void Dispose()
+        {
+            CheckExists();
+            m_Head->list.Dispose();
+            Memory.Free(m_Head, m_Head->allocator);
+            m_Head = null;
         }
 
         /// <summary>
@@ -193,7 +231,7 @@ namespace E.Collections.Unsafe
         private bool BinarySearch(Key key, out int index)
         {
             int low = 0;
-            int high = Count - 1;
+            int high = m_Head->list.Count - 1;
             while (low <= high)
             {
                 int mid = (low + high) / 2;
@@ -229,26 +267,6 @@ namespace E.Collections.Unsafe
         private void Unlock()
         {
             Interlocked.Exchange(ref m_Head->lockedMark, 0);
-        }
-
-        public void Clear()
-        {
-            CheckExists();
-            m_Head->list.Clear();
-        }
-
-        public void Dispose()
-        {
-            CheckExists();
-            m_Head->list.Dispose();
-            Memory.Free(m_Head, m_Head->allocator);
-            m_Head = null;
-        }
-
-        public void Extend(int count)
-        {
-            CheckExists();
-            m_Head->list.Extend(count);
         }
 
         [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
