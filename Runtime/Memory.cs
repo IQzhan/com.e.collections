@@ -67,12 +67,12 @@ namespace E.Collections.Unsafe
 
         public static int SizeOf<T>() where T : struct
         {
-            return Marshal.SizeOf<T>();
+            return UnsafeUtility.SizeOf<T>();
         }
 
         public static int SizeOf(Type type)
         {
-            return Marshal.SizeOf(type);
+            return UnsafeUtility.SizeOf(type);
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -82,17 +82,15 @@ namespace E.Collections.Unsafe
             public T data;
         }
 
-        private static readonly Type alignOfHelperType = typeof(AlignOfHelper<>);
-
         public static int AlignOf<T>() where T : struct
         {
-            return Marshal.SizeOf<AlignOfHelper<T>>() - Marshal.SizeOf<T>();
+            return UnsafeUtility.SizeOf<AlignOfHelper<T>>() - UnsafeUtility.SizeOf<T>();
         }
 
         public static int AlignOf(Type type)
         {
-            Type helper = alignOfHelperType.MakeGenericType(type);
-            return Marshal.SizeOf(helper) - Marshal.SizeOf(type);
+            Type helper = typeof(AlignOfHelper<>).MakeGenericType(type);
+            return UnsafeUtility.SizeOf(helper) - UnsafeUtility.SizeOf(type);
         }
 
         public static object PtrToStructure(void* ptr, Type structureType)

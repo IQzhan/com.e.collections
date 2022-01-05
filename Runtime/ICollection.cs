@@ -1,8 +1,6 @@
-using System;
-
 namespace E.Collections
 {
-    public interface ICollection : IDisposable
+    public interface ICollection
     {
         public bool IsCreated { get; }
         public int Count { get; }
@@ -19,5 +17,12 @@ namespace E.Collections
         public long ChunkSize { get; }
         public int ChunkCount { get; }
         public int ElementSize { get; }
+    }
+
+    public interface IThreadSafe { }
+
+    public unsafe interface IPtrCompareCallback
+    {
+        public int Compare(byte* a, byte* b);
     }
 }
