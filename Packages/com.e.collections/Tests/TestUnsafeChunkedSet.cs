@@ -1,5 +1,6 @@
 using E.Collections.Unsafe;
 using NUnit.Framework;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 using UnityEngine;
@@ -109,13 +110,13 @@ namespace E.Collections.Test
                     var setJob = new SetJob0()
                     {
                         array = array,
-                        set = tree,
+                        set = tree.AsThreadSafe(),
                         count = count
                     };
                     var setJob1 = new SetJob1()
                     {
                         array = array,
-                        set = tree
+                        set = tree.AsThreadSafe()
                     };
                     for (int i = 0; i < count; i++)
                     {
@@ -142,10 +143,10 @@ namespace E.Collections.Test
             }
         }
 
-        //[BurstCompile]
+        [BurstCompile]
         struct SetJob0 : IJobParallelFor
         {
-            public UnsafeChunkedSet<int> set;
+            public UnsafeChunkedSet<int>.ThreadSafe set;
 
             public NativeArray<int> array;
 
@@ -157,18 +158,19 @@ namespace E.Collections.Test
             }
         }
 
+        //[BurstCompile]
         struct SetJob1 : IJobParallelFor
         {
-            public UnsafeChunkedSet<int> set;
+            public UnsafeChunkedSet<int>.ThreadSafe set;
 
             public NativeArray<int> array;
 
             public void Execute(int index)
             {
                 int key = array[index];
-                Assert.AreEqual(true, set.Contains(key));
+                Assert.IsTrue(set.Contains(key));
                 set.Remove(key);
-                Assert.AreEqual(false, set.Contains(key));
+                Assert.IsFalse(set.Contains(key));
                 set.Check();
             }
         }
