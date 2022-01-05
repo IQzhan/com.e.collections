@@ -6,10 +6,13 @@ using Unity.Collections.LowLevel.Unsafe;
 
 namespace E.Collections.Unsafe
 {
-    public unsafe struct UnsafeChunkedQueue : ICollection, IChunked, IResizeable
+    public unsafe struct UnsafeChunkedQueue : ICollection, IChunked, IResizeable, IDisposable, IEquatable<UnsafeChunkedQueue>
     {
+        #region No ThreadSafe
+
         private struct Head
         {
+            public int existsMark;
             public Allocator allocator;
             public int elementSize;
             public int elementCount;
@@ -27,7 +30,19 @@ namespace E.Collections.Unsafe
         [NativeDisableUnsafePtrRestriction]
         private Head* m_Head;
 
+        private const int ExistsMark = 1000002;
+
         private const int ExpendCount = 32;
+
+        public bool IsCreated => m_Head != null && m_Head->existsMark == ExistsMark;
+
+        public int Count => IsCreated ? m_Head->elementCount : 0;
+
+        public long ChunkSize => IsCreated ? m_Head->chunkSize : 0;
+
+        public int ChunkCount => IsCreated ? m_Head->chunkCount : 0;
+
+        public int ElementSize => IsCreated ? m_Head->elementSize : 0;
 
         public UnsafeChunkedQueue(int elementSize, long chunkSize, Allocator allocator)
         {
@@ -48,6 +63,7 @@ namespace E.Collections.Unsafe
             m_Head = (Head*)Memory.Malloc<Head>(1, allocator);
             *m_Head = new Head()
             {
+                existsMark = ExistsMark,
                 allocator = allocator,
                 elementSize = elementSize,
                 elementCount = 0,
@@ -63,123 +79,224 @@ namespace E.Collections.Unsafe
             };
         }
 
-        public bool IsCreated => m_Head != null;
-
-        public int Count
-        {
-            get
-            {
-                CheckExists();
-                Lock();
-                int count = m_Head->elementCount;
-                Unlock();
-                return count;
-            }
-        }
-
-        public long ChunkSize
-        {
-            get
-            {
-                CheckExists();
-                return m_Head->chunkSize;
-            }
-        }
-
-        public int ChunkCount
-        {
-            get
-            {
-                CheckExists();
-                Lock();
-                int count = m_Head->chunkCount;
-                Unlock();
-                return count;
-            }
-        }
-
-        public int ElementSize
-        {
-            get
-            {
-                CheckExists();
-                return m_Head->elementSize;
-            }
-        }
-
         /// <summary>
-        /// Get but not remove no thread safe.
+        /// Get but not remove.
         /// </summary>
         /// <param name="index"></param>
         /// <returns></returns>
-        public byte* this[int index]
-        {
-            get
-            {
-                CheckExists();
-                CheckIndexNoLock(index);
-                if (m_Head->elementCount < 1) return default;
-                byte* ptr = GetDataPtr((m_Head->elementStart + index) % m_Head->maxElementCount);
-                return ptr;
-            }
-        }
+        public byte* this[int index] => Peek(index);
 
         /// <summary>
-        /// Enqueue thread safe.
+        /// Enqueue.
         /// </summary>
         /// <returns></returns>
         public byte* Enqueue()
         {
             CheckExists();
-            Lock();
-            InternalExtend(1);
-            byte* ptr = GetDataPtr((m_Head->elementStart + m_Head->elementCount++) % m_Head->maxElementCount);
-            Unlock();
-            return ptr;
+            return InternalEnqueue();
         }
 
         /// <summary>
-        /// Dequeue thread safe.
+        /// Dequeue.
         /// </summary>
         /// <returns></returns>
         public byte* Dequeue()
         {
             CheckExists();
-            Lock();
-            if (m_Head->elementCount < 1) return default;
-            byte* ptr = GetDataPtr(m_Head->elementStart++);
-            m_Head->elementStart %= m_Head->maxElementCount;
-            --m_Head->elementCount;
-            Unlock();
-            return ptr;
+            return InternalDequeue();
         }
 
         /// <summary>
-        /// Get but not reamove thread safe.
+        /// Get but not reamove.
         /// </summary>
         /// <param name="index"></param>
         /// <returns></returns>
         public byte* Peek(int index)
         {
             CheckExists();
-            Lock();
-            CheckIndex(index);
-            if (m_Head->elementCount < 1) return default;
-            byte* ptr = GetDataPtr((m_Head->elementStart + index) % m_Head->maxElementCount);
-            Unlock();
-            return ptr;
+            CheckIndexNoLock(index);
+            return InternalPeek(index);
         }
 
         /// <summary>
-        /// Extend thread safe.
+        /// Extend.
         /// </summary>
         /// <param name="count"></param>
         public void Extend(int count)
         {
             CheckExists();
+            InternalExtend(count);
+        }
+
+        /// <summary>
+        /// Clear.
+        /// </summary>
+        public void Clear()
+        {
+            CheckExists();
+            m_Head->elementCount = 0;
+            m_Head->elementStart = 0;
+        }
+
+        /// <summary>
+        /// Dispose
+        /// </summary>
+        public void Dispose()
+        {
+            CheckExists();
+            m_Head->existsMark = 0;
+            for (int i = 0; i < m_Head->chunkCount; i++)
+            {
+                Memory.Free(*(m_Head->chunks + i), m_Head->allocator);
+            }
+            Memory.Free(m_Head->chunks, m_Head->allocator);
+            Memory.Free(m_Head, m_Head->allocator);
+            m_Head = null;
+        }
+
+        public override bool Equals(object obj) => obj is UnsafeChunkedQueue queue && m_Head == queue.m_Head;
+
+        public bool Equals(UnsafeChunkedQueue other) => m_Head == other.m_Head;
+
+        public override int GetHashCode() => m_Head != null ? (int)m_Head : 0;
+
+        public static bool operator ==(UnsafeChunkedQueue left, UnsafeChunkedQueue right) => left.m_Head == right.m_Head;
+
+        public static bool operator !=(UnsafeChunkedQueue left, UnsafeChunkedQueue right) => left.m_Head != right.m_Head;
+
+        #endregion
+
+        #region ThreadSafe
+
+        public ThreadSafe AsThreadSafe() => new ThreadSafe(this);
+
+        public struct ThreadSafe : ICollection, IChunked, IResizeable, IThreadSafe, IEquatable<ThreadSafe>
+        {
+            private UnsafeChunkedQueue m_Instance;
+
+            public bool IsCreated => m_Instance.IsCreated;
+
+            public int Count => m_Instance.LockedCount();
+
+            public long ChunkSize => m_Instance.ChunkSize;
+
+            public int ChunkCount => m_Instance.LockedChunkCount();
+
+            public int ElementSize => m_Instance.ElementSize;
+
+            public ThreadSafe(UnsafeChunkedQueue instance) => m_Instance = instance;
+
+            public byte* this[int index] => m_Instance.LockedPeek(index);
+
+            public byte* Enqueue() => m_Instance.LockedEnqueue();
+
+            public byte* Dequeue() => m_Instance.LockedDequeue();
+
+            public byte* Peek(int index) => m_Instance.LockedPeek(index);
+
+            public void Clear() => m_Instance.LockedClear();
+
+            public void Extend(int count) => m_Instance.LockedExtend(count);
+
+            public override bool Equals(object obj) => obj is ThreadSafe safe && m_Instance == safe.m_Instance;
+
+            public bool Equals(ThreadSafe other) => m_Instance == other.m_Instance;
+
+            public override int GetHashCode() => m_Instance.GetHashCode();
+
+            public static bool operator ==(ThreadSafe left, ThreadSafe right) => left.m_Instance == right.m_Instance;
+
+            public static bool operator !=(ThreadSafe left, ThreadSafe right) => left.m_Instance != right.m_Instance;
+        }
+
+        private int LockedCount()
+        {
+            if (!IsCreated) return 0;
+            Lock();
+            int count = m_Head->elementCount;
+            Unlock();
+            return count;
+        }
+
+        private int LockedChunkCount()
+        {
+            if (!IsCreated) return 0;
+            Lock();
+            int count = m_Head->chunkCount;
+            Unlock();
+            return count;
+        }
+
+        private byte* LockedEnqueue()
+        {
+            CheckExists();
+            Lock();
+            byte* result = InternalEnqueue();
+            Unlock();
+            return result;
+        }
+
+        private byte* LockedDequeue()
+        {
+            CheckExists();
+            Lock();
+            byte* result = InternalDequeue();
+            Unlock();
+            return result;
+        }
+
+        private byte* LockedPeek(int index)
+        {
+            CheckExists();
+            Lock();
+            CheckIndex(index);
+            byte* result = InternalPeek(index);
+            Unlock();
+            return result;
+        }
+
+        private void LockedExtend(int count)
+        {
+            CheckExists();
             Lock();
             InternalExtend(count);
             Unlock();
+        }
+
+        private void LockedClear()
+        {
+            CheckExists();
+            Lock();
+            m_Head->elementCount = 0;
+            m_Head->elementStart = 0;
+            Unlock();
+        }
+
+        #endregion
+
+        #region Internal
+
+        private byte* InternalEnqueue()
+        {
+            InternalExtend(1);
+            byte* ptr = GetDataPtr((m_Head->elementStart + m_Head->elementCount++) % m_Head->maxElementCount);
+            return ptr;
+        }
+
+        private byte* InternalDequeue()
+        {
+            if (m_Head->elementCount < 1) return default;
+            byte* ptr = GetDataPtr(m_Head->elementStart++);
+            m_Head->elementStart %= m_Head->maxElementCount;
+            --m_Head->elementCount;
+            return ptr;
+        }
+
+        private byte* InternalPeek(int index)
+        {
+            if (m_Head->elementCount < 1) return default;
+            byte* ptr = GetDataPtr((m_Head->elementStart + index) % m_Head->maxElementCount);
+            return ptr;
         }
 
         private void InternalExtend(int count)
@@ -242,33 +359,6 @@ namespace E.Collections.Unsafe
         }
 
         /// <summary>
-        /// Clear thread safe.
-        /// </summary>
-        public void Clear()
-        {
-            CheckExists();
-            Lock();
-            m_Head->elementCount = 0;
-            m_Head->elementStart = 0;
-            Unlock();
-        }
-
-        /// <summary>
-        /// Dispose
-        /// </summary>
-        public void Dispose()
-        {
-            CheckExists();
-            for (int i = 0; i < m_Head->chunkCount; i++)
-            {
-                Memory.Free(*(m_Head->chunks + i), m_Head->allocator);
-            }
-            Memory.Free(m_Head->chunks, m_Head->allocator);
-            Memory.Free(m_Head, m_Head->allocator);
-            m_Head = null;
-        }
-
-        /// <summary>
         /// Get element by id.
         /// </summary>
         /// <param name="index"></param>
@@ -298,11 +388,15 @@ namespace E.Collections.Unsafe
             Interlocked.Exchange(ref m_Head->lockedMark, 0);
         }
 
+        #endregion
+
+        #region Check
+
         [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
         private void CheckExists()
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            if (m_Head == null)
+            if (m_Head == null || m_Head->existsMark != ExistsMark)
             {
                 throw new NullReferenceException($"{nameof(UnsafeChunkedQueue)} is yet created or already disposed.");
             }
@@ -331,5 +425,7 @@ namespace E.Collections.Unsafe
             }
 #endif
         }
+
+        #endregion
     }
 }
