@@ -168,6 +168,10 @@ namespace E.Collections.Unsafe
 
         public struct ThreadSafe : ICollection, IChunked, IResizeable, IThreadSafe, IEquatable<ThreadSafe>
         {
+            public UnsafeChunkedList AsNoThreadSafe() => m_Instance;
+
+            public ThreadSafe(UnsafeChunkedList instance) => m_Instance = instance;
+
             private readonly UnsafeChunkedList m_Instance;
 
             public bool IsCreated => m_Instance.IsCreated;
@@ -179,8 +183,6 @@ namespace E.Collections.Unsafe
             public int ChunkCount => m_Instance.LockedChunkCount();
 
             public int ElementSize => m_Instance.ElementSize;
-
-            public ThreadSafe(UnsafeChunkedList instance) => m_Instance = instance;
 
             public byte* this[int index] => m_Instance.LockedGet(index);
 
