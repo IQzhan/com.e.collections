@@ -98,6 +98,18 @@ namespace E.Collections.Unsafe
             return -1;
         }
 
+        public int IndexOf(Key key, out byte* value)
+        {
+            CheckExists();
+            if (TryGetNode(key, out Node* node))
+            {
+                value = (byte*)node + m_Head->preSize;
+                return node->index;
+            }
+            value = null;
+            return -1;
+        }
+
         public bool TryGetValue(Key key, out byte* value)
         {
             CheckExists();
@@ -216,6 +228,8 @@ namespace E.Collections.Unsafe
 
             public int IndexOf(Key key) => m_Instance.LockedIndexOf(key);
 
+            public int IndexOf(Key key, out byte* value) => m_Instance.LockedIndexOf(key, out value);
+
             public bool TryGetValue(Key key, out byte* value) => m_Instance.LockedTryGetValue(key, out value);
 
             public Key GetKeyByIndex(int index) => m_Instance.LockedGetKeyByIndex(index);
@@ -290,6 +304,21 @@ namespace E.Collections.Unsafe
                 Unlock();
                 return node->index;
             }
+            Unlock();
+            return -1;
+        }
+
+        private int LockedIndexOf(Key key, out byte* value)
+        {
+            CheckExists();
+            Lock();
+            if (TryGetNode(key, out Node* node))
+            {
+                value = (byte*)node + m_Head->preSize;
+                Unlock();
+                return node->index;
+            }
+            value = null;
             Unlock();
             return -1;
         }
