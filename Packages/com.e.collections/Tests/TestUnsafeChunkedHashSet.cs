@@ -7,13 +7,13 @@ using UnityEngine;
 
 namespace E.Collections.Test
 {
-    public unsafe class TestUnsafeChunkedSet
+    public unsafe class TestUnsafeChunkedHashSet
     {
         [Test]
-        public void TestUnsafeChunkedSetSet()
+        public void TestUnsafeChunkedHashSetSet()
         {
             int valueSize = Memory.SizeOf<int>();
-            using (UnsafeChunkedSet<int> tree = new UnsafeChunkedSet<int>(valueSize, 1 << 16, Allocator.Temp))
+            using (UnsafeChunkedHashSet<int> tree = new UnsafeChunkedHashSet<int>(500, valueSize, 1 << 16, Allocator.Temp))
             {
                 NativeArray<int> array = default;
                 try
@@ -38,7 +38,6 @@ namespace E.Collections.Test
                         int index = tree.IndexOf(key, out byte* v);
                         Assert.AreEqual(true, index != -1);
                         Assert.AreEqual(key, *(int*)v);
-                        tree.Check();
                     }
                 }
                 catch
@@ -53,10 +52,10 @@ namespace E.Collections.Test
         }
 
         [Test]
-        public void TestUnsafeChunkedSetRemove()
+        public void TestUnsafeChunkedHashSetRemove()
         {
             int valueSize = Memory.SizeOf<int>();
-            using (UnsafeChunkedSet<int> tree = new UnsafeChunkedSet<int>(valueSize, 1 << 16, Allocator.Temp))
+            using (UnsafeChunkedHashSet<int> tree = new UnsafeChunkedHashSet<int>(500, valueSize, 1 << 16, Allocator.Temp))
             {
                 NativeArray<int> array = default;
                 try
@@ -82,7 +81,6 @@ namespace E.Collections.Test
                         Assert.AreEqual(true, tree.Contains(key));
                         tree.Remove(key);
                         Assert.AreEqual(false, tree.Contains(key));
-                        tree.Check();
                     }
                 }
                 catch
@@ -97,10 +95,10 @@ namespace E.Collections.Test
         }
 
         [Test]
-        public void TestUnsafeChunkedSetJob()
+        public void TestUnsafeChunkedHashSetJob()
         {
             int valueSize = Memory.SizeOf<int>();
-            using (UnsafeChunkedSet<int> tree = new UnsafeChunkedSet<int>(valueSize, 1 << 16, Allocator.Temp))
+            using (UnsafeChunkedHashSet<int> tree = new UnsafeChunkedHashSet<int>(500, valueSize, 1 << 16, Allocator.Temp))
             {
                 NativeArray<int> array = default;
                 try
@@ -146,7 +144,7 @@ namespace E.Collections.Test
         [BurstCompile]
         struct SetJob0 : IJobParallelFor
         {
-            public UnsafeChunkedSet<int>.ThreadSafe set;
+            public UnsafeChunkedHashSet<int>.ThreadSafe set;
 
             public NativeArray<int> array;
 
@@ -161,7 +159,7 @@ namespace E.Collections.Test
         //[BurstCompile]
         struct SetJob1 : IJobParallelFor
         {
-            public UnsafeChunkedSet<int>.ThreadSafe set;
+            public UnsafeChunkedHashSet<int>.ThreadSafe set;
 
             public NativeArray<int> array;
 
@@ -171,7 +169,6 @@ namespace E.Collections.Test
                 Assert.IsTrue(set.Contains(key));
                 set.Remove(key);
                 Assert.IsFalse(set.Contains(key));
-                set.Check();
             }
         }
     }

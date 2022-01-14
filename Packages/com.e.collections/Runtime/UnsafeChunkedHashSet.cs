@@ -7,10 +7,10 @@ using Unity.Collections.LowLevel.Unsafe;
 namespace E.Collections.Unsafe
 {
     /// <summary>
-    /// Red-Black-Tree
+    /// Hash + Red-Black-Tree, faster then UnsafeChunkedSet
     /// </summary>
     /// <typeparam name="Key"></typeparam>
-    public unsafe struct UnsafeChunkedSet<Key> : ICollection, IChunked, IResizeable, IDisposable, IEquatable<UnsafeChunkedSet<Key>>
+    public unsafe struct UnsafeChunkedHashSet<Key> : ICollection, IChunked, IResizeable, IDisposable, IEquatable<UnsafeChunkedHashSet<Key>>
         where Key : unmanaged, IComparable<Key>
     {
         #region No ThreadSafe
@@ -20,9 +20,15 @@ namespace E.Collections.Unsafe
             public int existsMark;
             public Allocator allocator;
             public int preSize;
+            public int mapLength;
             public int lockedMark;
-            public Node* root;
+            public Tree* map;
             public UnsafeChunkedList data;
+        }
+
+        private struct Tree
+        {
+            public Node* root;
         }
 
         private enum Color
@@ -35,16 +41,17 @@ namespace E.Collections.Unsafe
         {
             public int index;
             public Color color;
+            public Node* parent;
             public Node* left;
             public Node* right;
-            public Node* parent;
+            public int belongs;
             public Key key;
         }
 
         [NativeDisableUnsafePtrRestriction]
         private Head* m_Head;
 
-        private const int ExistsMark = 1000003;
+        private const int ExistsMark = 1000004;
 
         public bool IsCreated => m_Head != null && m_Head->existsMark == ExistsMark;
 
@@ -56,15 +63,13 @@ namespace E.Collections.Unsafe
 
         public int ElementSize => IsCreated ? m_Head->data.ElementSize : 0;
 
-        /// <summary>
-        /// Create a red-black tree.
-        /// </summary>
-        /// <param name="valueSize"></param>
-        /// <param name="chunkSize"></param>
-        /// <param name="allocator"></param>
-        public UnsafeChunkedSet(int valueSize, long chunkSize, Allocator allocator)
+        public UnsafeChunkedHashSet(int hashMapLength, int valueSize, long chunkSize, Allocator allocator)
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
+            if (hashMapLength <= 0)
+            {
+                throw new ArgumentException("hashMapLength must bigger then 0.");
+            }
             if (valueSize <= 0)
             {
                 throw new ArgumentException("elementSize must bigger then 0.");
@@ -86,10 +91,11 @@ namespace E.Collections.Unsafe
                 existsMark = ExistsMark,
                 allocator = allocator,
                 preSize = preSize,
-                lockedMark = 0,
-                root = null,
+                mapLength = hashMapLength,
+                map = (Tree*)Memory.Malloc<Tree>(hashMapLength, allocator),
                 data = new UnsafeChunkedList(nodeSize, chunkSize, allocator)
             };
+            Memory.Clear<Tree>(m_Head->map, hashMapLength);
         }
 
         public byte* this[int index] => GetValueByIndex(index);
@@ -97,13 +103,15 @@ namespace E.Collections.Unsafe
         public bool Contains(Key key)
         {
             CheckExists();
-            return TryGetNode(key, out var _);
+            Tree* tree = GetTree(key);
+            return TryGetNode(tree, key, out var _);
         }
 
         public int IndexOf(Key key)
         {
             CheckExists();
-            if (TryGetNode(key, out Node* node))
+            Tree* tree = GetTree(key);
+            if (TryGetNode(tree, key, out Node* node))
             {
                 return node->index;
             }
@@ -113,7 +121,8 @@ namespace E.Collections.Unsafe
         public int IndexOf(Key key, out byte* value)
         {
             CheckExists();
-            if (TryGetNode(key, out Node* node))
+            Tree* tree = GetTree(key);
+            if (TryGetNode(tree, key, out Node* node))
             {
                 value = (byte*)node + m_Head->preSize;
                 return node->index;
@@ -157,13 +166,15 @@ namespace E.Collections.Unsafe
         public byte* Set(Key key)
         {
             CheckExists();
-            return InternalSet(key);
+            Tree* tree = GetTree(key);
+            return InternalSet(tree, key);
         }
 
         public void Remove(Key key)
         {
             CheckExists();
-            InternalRemove(key);
+            Tree* tree = GetTree(key);
+            InternalRemove(tree, key);
         }
 
         public void Extend(int count)
@@ -175,28 +186,29 @@ namespace E.Collections.Unsafe
         public void Clear()
         {
             CheckExists();
+            Memory.Clear<Tree>(m_Head->map, m_Head->mapLength);
             m_Head->data.Clear();
-            m_Head->root = null;
         }
 
         public void Dispose()
         {
             CheckExists();
             m_Head->existsMark = 0;
+            Memory.Free(m_Head->map, m_Head->allocator);
             m_Head->data.Dispose();
             Memory.Free(m_Head, m_Head->allocator);
             m_Head = null;
         }
 
-        public override bool Equals(object obj) => obj is UnsafeChunkedSet<Key> set && m_Head == set.m_Head;
+        public override bool Equals(object obj) => obj is UnsafeChunkedHashSet<Key> set && m_Head == set.m_Head;
 
-        public bool Equals(UnsafeChunkedSet<Key> other) => m_Head == other.m_Head;
+        public bool Equals(UnsafeChunkedHashSet<Key> other) => m_Head == other.m_Head;
 
         public override int GetHashCode() => m_Head != null ? (int)m_Head : 0;
 
-        public static bool operator ==(UnsafeChunkedSet<Key> left, UnsafeChunkedSet<Key> right) => left.m_Head == right.m_Head;
+        public static bool operator ==(UnsafeChunkedHashSet<Key> left, UnsafeChunkedHashSet<Key> right) => left.m_Head == right.m_Head;
 
-        public static bool operator !=(UnsafeChunkedSet<Key> left, UnsafeChunkedSet<Key> right) => left.m_Head != right.m_Head;
+        public static bool operator !=(UnsafeChunkedHashSet<Key> left, UnsafeChunkedHashSet<Key> right) => left.m_Head != right.m_Head;
 
         #endregion
 
@@ -206,11 +218,11 @@ namespace E.Collections.Unsafe
 
         public struct ThreadSafe : ICollection, IChunked, IResizeable, IThreadSafe, IEquatable<ThreadSafe>
         {
-            public UnsafeChunkedSet<Key> AsNoThreadSafe() => m_Instance;
+            public UnsafeChunkedHashSet<Key> AsNoThreadSafe() => m_Instance;
 
-            public ThreadSafe(UnsafeChunkedSet<Key> instance) => m_Instance = instance;
+            internal ThreadSafe(UnsafeChunkedHashSet<Key> instance) => m_Instance = instance;
 
-            private readonly UnsafeChunkedSet<Key> m_Instance;
+            private readonly UnsafeChunkedHashSet<Key> m_Instance;
 
             public bool IsCreated => m_Instance.IsCreated;
 
@@ -255,15 +267,6 @@ namespace E.Collections.Unsafe
             public static bool operator ==(ThreadSafe left, ThreadSafe right) => left.m_Instance == right.m_Instance;
 
             public static bool operator !=(ThreadSafe left, ThreadSafe right) => left.m_Instance != right.m_Instance;
-
-            [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
-            public void Check()
-            {
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
-
-                m_Instance.LockedCheck();
-#endif
-            }
         }
 
         private int LockedCount()
@@ -287,8 +290,9 @@ namespace E.Collections.Unsafe
         private bool LockedContains(Key key)
         {
             CheckExists();
+            Tree* tree = GetTree(key);
             Lock();
-            bool result = TryGetNode(key, out var _);
+            bool result = TryGetNode(tree, key, out var _);
             Unlock();
             return result;
         }
@@ -296,8 +300,9 @@ namespace E.Collections.Unsafe
         private int LockedIndexOf(Key key)
         {
             CheckExists();
+            Tree* tree = GetTree(key);
             Lock();
-            if (TryGetNode(key, out Node* node))
+            if (TryGetNode(tree, key, out Node* node))
             {
                 Unlock();
                 return node->index;
@@ -309,8 +314,9 @@ namespace E.Collections.Unsafe
         private int LockedIndexOf(Key key, out byte* value)
         {
             CheckExists();
+            Tree* tree = GetTree(key);
             Lock();
-            if (TryGetNode(key, out Node* node))
+            if (TryGetNode(tree, key, out Node* node))
             {
                 value = (byte*)node + m_Head->preSize;
                 Unlock();
@@ -364,8 +370,9 @@ namespace E.Collections.Unsafe
         private byte* LockedSet(Key key)
         {
             CheckExists();
+            Tree* tree = GetTree(key);
             Lock();
-            byte* result = InternalSet(key);
+            byte* result = InternalSet(tree, key);
             Unlock();
             return result;
         }
@@ -373,8 +380,9 @@ namespace E.Collections.Unsafe
         private void LockedRemove(Key key)
         {
             CheckExists();
+            Tree* tree = GetTree(key);
             Lock();
-            InternalRemove(key);
+            InternalRemove(tree, key);
             Unlock();
         }
 
@@ -390,8 +398,8 @@ namespace E.Collections.Unsafe
         {
             CheckExists();
             Lock();
+            Memory.Clear<Tree>(m_Head->map, m_Head->mapLength);
             m_Head->data.Clear();
-            m_Head->root = null;
             Unlock();
         }
 
@@ -399,9 +407,14 @@ namespace E.Collections.Unsafe
 
         #region Internal
 
-        private bool TryGetNode(Key key, out Node* node)
+        private Tree* GetTree(Key key)
         {
-            node = m_Head->root;
+            return m_Head->map + (key.GetHashCode() % m_Head->mapLength);
+        }
+
+        private bool TryGetNode(Tree* tree, Key key, out Node* node)
+        {
+            node = tree->root;
             while (node != null)
             {
                 int compare = key.CompareTo(node->key);
@@ -421,10 +434,10 @@ namespace E.Collections.Unsafe
             return false;
         }
 
-        private byte* InternalSet(Key key)
+        private byte* InternalSet(Tree* tree, Key key)
         {
             Node* node, parent;
-            node = m_Head->root;
+            node = tree->root;
             parent = node;
             byte* res;
             while (node != null)
@@ -445,17 +458,17 @@ namespace E.Collections.Unsafe
                     return res;
                 }
             }
-            //ÂàùÂßãÂåñÁ∫¢Ëâ≤ËäÇÁÇπ
-            node = Malloc();
+            //≥ı ºªØ∫Ï…´Ω⁄µ„
+            node = Malloc(tree);
             node->key = key;
             node->color = Color.Red;
             node->left = node->right = null;
             node->parent = parent;
             res = (byte*)node + m_Head->preSize;
-            //‰∏éÁà∂ËøûÊé•
-            if (m_Head->root == null)
+            //”Î∏∏¡¨Ω”
+            if (tree->root == null)
             {
-                m_Head->root = node;
+                tree->root = node;
             }
             else if (key.CompareTo(parent->key) < 0)
             {
@@ -465,18 +478,18 @@ namespace E.Collections.Unsafe
             {
                 parent->right = node;
             }
-            //Â∞ÜÊôÆÈÄö‰∫åÂèâÊ†ë‰øÆÊ≠£‰∏∫Á∫¢ÈªëÊ†ë
-            AddFixup(node);
+            //Ω´∆’Õ®∂˛≤Ê ˜–ﬁ’˝Œ™∫Ï∫⁄ ˜
+            AddFixup(tree, node);
             return res;
         }
 
-        private void InternalRemove(Key key)
+        private void InternalRemove(Tree* tree, Key key)
         {
-            if (m_Head->root == null)
+            if (tree->root == null)
             {
                 return;
             }
-            Node* toDelete = m_Head->root;
+            Node* toDelete = tree->root;
             while (toDelete != null)
             {
                 int compare = key.CompareTo(toDelete->key);
@@ -501,46 +514,46 @@ namespace E.Collections.Unsafe
             bool hasLeft, hasRight;
             while ((hasLeft = toDelete->left != null) | (hasRight = toDelete->right != null))
             {
-                // Â¶ÇÊûú‰∏§‰∏™Â≠êËäÇÁÇπ
+                // »Áπ˚¡Ω∏ˆ◊”Ω⁄µ„
                 if (hasLeft && hasRight)
                 {
-                    //ÊâæÂà∞Âè≥Â≠êÊ†ë‰∏≠ÊúÄÂ∞èÁöÑÁªìÁÇπ
+                    //’“µΩ”“◊” ˜÷–◊Ó–°µƒΩ·µ„
                     forReplace = FindMin(toDelete->right);
                 }
-                // ËäÇÁÇπ‰∏∫ÈªëÔºå‰∏îÂè™ÊúâÁ∫¢Âè≥Â≠êËäÇÁÇπ
+                // Ω⁄µ„Œ™∫⁄£¨«“÷ª”–∫Ï”“◊”Ω⁄µ„
                 else if (!hasLeft && hasRight)
                 {
                     forReplace = toDelete->right;
                 }
-                // ËäÇÁÇπ‰∏∫ÈªëÔºå‰∏îÂè™ÊúâÁ∫¢Â∑¶Â≠êËäÇÁÇπ
+                // Ω⁄µ„Œ™∫⁄£¨«“÷ª”–∫Ï◊Û◊”Ω⁄µ„
                 else if (hasLeft && !hasRight)
                 {
                     forReplace = toDelete->left;
                 }
-                // ‰∫§Êç¢ËäÇÁÇπ‰ΩçÁΩÆÔºåÂπ∂‰øùËØÅÈ¢úËâ≤Âú®‰ΩçÁΩÆ‰∏ä‰∏çÂèò
-                SwapUpDown(toDelete, forReplace);
+                // ΩªªªΩ⁄µ„Œª÷√£¨≤¢±£÷§—’…´‘⁄Œª÷√…œ≤ª±‰
+                SwapUpDown(tree, toDelete, forReplace);
             }
-            // ‰øÆÊ≠£Á∫¢ÈªëÊ†ëÔºåÁ∫¢Ëâ≤Ë∑≥Ëøá
-            RemoveFixup(toDelete);
-            // ÈáäÊîæ
+            // –ﬁ’˝∫Ï∫⁄ ˜£¨∫Ï…´Ã¯π˝
+            RemoveFixup(tree, toDelete);
+            //  Õ∑≈
             Free(toDelete);
         }
 
-        private void AddFixup(Node* inserted)
+        private void AddFixup(Tree* tree, Node* inserted)
         {
-            if (inserted == m_Head->root)
+            if (inserted == tree->root)
             {
                 inserted->color = Color.Black;
                 return;
             }
-            // Áà∂‰∏∫Á∫¢Ëâ≤Êó∂ÊâçÈúÄË¶ÅË∞ÉÊï¥
+            // ∏∏Œ™∫Ï…´ ±≤≈–Ë“™µ˜’˚
             while (inserted->parent != null && inserted->parent->color == Color.Red)
             {
-                // Áà∂ÁªìÁÇπÊòØÁ•ñÁà∂ÁªìÁÇπÁöÑÂ∑¶Â≠ê
+                // ∏∏Ω·µ„ «◊Ê∏∏Ω·µ„µƒ◊Û◊”
                 if (inserted->parent == inserted->parent->parent->left)
                 {
                     Node* uncle = inserted->parent->parent->right;
-                    // ÂèîÁ∫¢
+                    //  Â∫Ï
                     if (uncle != null && uncle->color == Color.Red)
                     {
                         inserted->parent->color = Color.Black;
@@ -548,16 +561,16 @@ namespace E.Collections.Unsafe
                         inserted->parent->parent->color = Color.Red;
                         inserted = inserted->parent->parent;
                     }
-                    // ÂèîÈªë
+                    //  Â∫⁄
                     else
                     {
-                        // ÂΩìÂâçÁªìÁÇπÊòØÁà∂ÁªìÁÇπÁöÑÂè≥Â≠ê
+                        // µ±«∞Ω·µ„ «∏∏Ω·µ„µƒ”“◊”
                         if (inserted == inserted->parent->right)
                         {
                             inserted = inserted->parent;
                             LeftRotate(inserted);
                         }
-                        // ÂΩìÂâçÁªìÁÇπÊòØÁà∂ÁªìÁÇπÁöÑÂ∑¶Â≠ê
+                        // µ±«∞Ω·µ„ «∏∏Ω·µ„µƒ◊Û◊”
                         else
                         {
                             inserted->parent->color = Color.Black;
@@ -566,11 +579,11 @@ namespace E.Collections.Unsafe
                         }
                     }
                 }
-                // Áà∂ÁªìÁÇπÊòØÁ•ñÁà∂ÁªìÁÇπÁöÑÂè≥Â≠ê
+                // ∏∏Ω·µ„ «◊Ê∏∏Ω·µ„µƒ”“◊”
                 else
                 {
                     Node* uncle = inserted->parent->parent->left;
-                    // ÂèîÁ∫¢
+                    //  Â∫Ï
                     if (uncle != null && uncle->color == Color.Red)
                     {
                         inserted->parent->color = Color.Black;
@@ -578,16 +591,16 @@ namespace E.Collections.Unsafe
                         inserted->parent->parent->color = Color.Red;
                         inserted = inserted->parent->parent;
                     }
-                    // ÂèîÈªë
+                    //  Â∫⁄
                     else
                     {
-                        // ÂΩìÂâçÁªìÁÇπÊòØÁà∂ÁªìÁÇπÁöÑÂ∑¶Â≠ê
+                        // µ±«∞Ω·µ„ «∏∏Ω·µ„µƒ◊Û◊”
                         if (inserted == inserted->parent->left)
                         {
                             inserted = inserted->parent;
                             RightRotate(inserted);
                         }
-                        // ÂΩìÂâçÁªìÁÇπÊòØÁà∂ÁªìÁÇπÁöÑÂè≥Â≠ê
+                        // µ±«∞Ω·µ„ «∏∏Ω·µ„µƒ”“◊”
                         else
                         {
                             inserted->parent->color = Color.Black;
@@ -597,11 +610,11 @@ namespace E.Collections.Unsafe
                     }
                 }
             }
-            // Ê†π‰∏∫Èªë
-            m_Head->root->color = Color.Black;
+            // ∏˘Œ™∫⁄
+            tree->root->color = Color.Black;
         }
 
-        private void SwapUpDown(Node* up, Node* down)
+        private void SwapUpDown(Tree* tree, Node* up, Node* down)
         {
             Color c = up->color;
             up->color = down->color;
@@ -639,7 +652,7 @@ namespace E.Collections.Unsafe
             }
             else
             {
-                m_Head->root = down;
+                tree->root = down;
             }
 
             //swap left
@@ -683,34 +696,34 @@ namespace E.Collections.Unsafe
             }
         }
 
-        private void RemoveFixup(Node* node)
+        private void RemoveFixup(Tree* tree, Node* node)
         {
-            if (node->color == Color.Red || node == m_Head->root)
+            if (node->color == Color.Red || node == tree->root)
             {
                 return;
             }
-            while (node != m_Head->root)
+            while (node != tree->root)
             {
-                // nodeÊòØÈªëËâ≤Êó†Â≠êËäÇÁÇπ‰∏îÊúâÂÖÑÂºüÔºåÊ≠§Êó∂ÂÅáË£Önode == null
+                // node «∫⁄…´Œﬁ◊”Ω⁄µ„«“”––÷µ‹£¨¥À ±ºŸ◊∞node == null
                 if (node == node->parent->right)
-                // ÂÖÑÂú®Â∑¶
+                // –÷‘⁄◊Û
                 {
                     Node* bro = node->parent->left;
                     if (bro->color == Color.Black)
                     {
-                        // ÂÖÑÈªë
+                        // –÷∫⁄
                         bool broLBlack = bro->left == null || (bro->left->color == Color.Black);
                         bool broRBlack = bro->right == null || (bro->right->color == Color.Black);
-                        // ÂÖÑÂ≠êÂÖ®Èªë
+                        // –÷◊”»´∫⁄
                         if (broLBlack && broRBlack)
                         {
-                            // Áà∂Èªë
+                            // ∏∏∫⁄
                             if (node->parent->color == Color.Black)
                             {
                                 bro->color = Color.Red;
                                 node = node->parent;
                             }
-                            // Áà∂Á∫¢
+                            // ∏∏∫Ï
                             else
                             {
                                 bro->color = Color.Red;
@@ -718,17 +731,17 @@ namespace E.Collections.Unsafe
                                 break;
                             }
                         }
-                        // ÂÖÑÂ≠ê‰∏çÂÖ®Èªë
+                        // –÷◊”≤ª»´∫⁄
                         else
                         {
-                            // ÂÖÑÂ∑¶Â≠êÈªë
+                            // –÷◊Û◊”∫⁄
                             if (broLBlack)
                             {
                                 bro->color = Color.Red;
                                 bro->right->color = Color.Black;
                                 LeftRotate(bro);
                             }
-                            // ÂÖÑÂ∑¶Â≠êÁ∫¢
+                            // –÷◊Û◊”∫Ï
                             else
                             {
                                 Color c = node->parent->color;
@@ -740,7 +753,7 @@ namespace E.Collections.Unsafe
                             }
                         }
                     }
-                    // ÂÖÑÁ∫¢ÔºåÂàôÂÖÑ‰∏ÄÂÆöÊúâÂ≠êËäÇÁÇπ
+                    // –÷∫Ï£¨‘Ú–÷“ª∂®”–◊”Ω⁄µ„
                     else
                     {
                         RightRotate(node->parent);
@@ -748,25 +761,25 @@ namespace E.Collections.Unsafe
                         bro->color = Color.Black;
                     }
                 }
-                // ÂÖÑÂú®Âè≥
+                // –÷‘⁄”“
                 else
                 {
                     Node* bro = node->parent->right;
-                    // ÂÖÑÈªë
+                    // –÷∫⁄
                     if (bro->color == Color.Black)
                     {
                         bool broLBlack = bro->left == null || (bro->left->color == Color.Black);
                         bool broRBlack = bro->right == null || (bro->right->color == Color.Black);
-                        // ÂÖÑÂ≠êÂÖ®Èªë
+                        // –÷◊”»´∫⁄
                         if (broLBlack && broRBlack)
                         {
-                            // Áà∂Èªë
+                            // ∏∏∫⁄
                             if (node->parent->color == Color.Black)
                             {
                                 bro->color = Color.Red;
                                 node = node->parent;
                             }
-                            // Áà∂Á∫¢
+                            // ∏∏∫Ï
                             else
                             {
                                 bro->color = Color.Red;
@@ -774,17 +787,17 @@ namespace E.Collections.Unsafe
                                 break;
                             }
                         }
-                        // ÂÖÑÂ≠ê‰∏çÂÖ®Èªë
+                        // –÷◊”≤ª»´∫⁄
                         else
                         {
-                            // ÂÖÑÂè≥Â≠êÈªë
+                            // –÷”“◊”∫⁄
                             if (broRBlack)
                             {
                                 bro->color = Color.Red;
                                 bro->left->color = Color.Black;
                                 RightRotate(bro);
                             }
-                            // ÂÖÑÂè≥Â≠êÁ∫¢
+                            // –÷”“◊”∫Ï
                             else
                             {
                                 Color c = node->parent->color;
@@ -796,7 +809,7 @@ namespace E.Collections.Unsafe
                             }
                         }
                     }
-                    // ÂÖÑÁ∫¢ÔºåÂàôÂÖÑ‰∏ÄÂÆöÊúâÂ≠êËäÇÁÇπ
+                    // –÷∫Ï£¨‘Ú–÷“ª∂®”–◊”Ω⁄µ„
                     else
                     {
                         LeftRotate(node->parent);
@@ -805,8 +818,8 @@ namespace E.Collections.Unsafe
                     }
                 }
             }
-            // Ê†πËäÇÁÇπÂøÖÈ°ªÊòØÈªë
-            m_Head->root->color = Color.Black;
+            // ∏˘Ω⁄µ„±ÿ–Î «∫⁄
+            tree->root->color = Color.Black;
         }
 
         private void LeftRotate(Node* node)
@@ -829,7 +842,7 @@ namespace E.Collections.Unsafe
             nodeR->parent = nodeP;
             if (nodeP == null)
             {
-                m_Head->root = nodeR;
+                (m_Head->map + node->belongs)->root = nodeR;
             }
             else if (nodeP->left == node)
             {
@@ -863,7 +876,7 @@ namespace E.Collections.Unsafe
             nodeL->parent = nodeP;
             if (nodeP == null)
             {
-                m_Head->root = nodeL;
+                (m_Head->map + node->belongs)->root = nodeL;
             }
             else if (nodeP->left == node)
             {
@@ -890,28 +903,22 @@ namespace E.Collections.Unsafe
             return t;
         }
 
-        /// <summary>
-        /// ËØ∑Ê±ÇÂú∞ÂùÄ
-        /// </summary>
-        /// <returns></returns>
-        private Node* Malloc()
+        private Node* Malloc(Tree* tree)
         {
             int index = m_Head->data.Count;
             Node* ptr = (Node*)m_Head->data.Add();
             ptr->index = index;
+            ptr->belongs = (int)(tree - m_Head->map);
             return ptr;
         }
 
-        /// <summary>
-        /// ÈáäÊîæÂú∞ÂùÄ
-        /// </summary>
-        /// <param name="node"></param>
         private void Free(Node* node)
         {
-            // Ëß£Èô§Áà∂ËøûÊé•
-            if (node == m_Head->root)
+            // Ω‚≥˝∏∏¡¨Ω”
+            ref var root = ref (m_Head->map + node->belongs)->root;
+            if (node == root)
             {
-                m_Head->root = null;
+                root = null;
             }
             else if (node->parent != null)
             {
@@ -925,37 +932,32 @@ namespace E.Collections.Unsafe
                 }
             }
             int index = node->index;
-            // ÊòØÊúÄÂêé‰∏Ä‰∏™element
             UnsafeChunkedList data = m_Head->data;
             if (index == data.Count - 1)
             {
-                // Áõ¥Êé•ÁßªÈô§
                 data.RemoveLast();
             }
-            // ‰∏çÊòØÊúÄÂêé‰∏Ä‰∏™element
             else
             {
-                // Â∞ÜÊúÄÂêé‰∏Ä‰∏™elementÁßªÂä®Âà∞node
                 data.SwapLastAndRemove(index);
-                // ‰∏ãÊ†áËÆæÁΩÆ‰∏∫ÂΩìÂâçnode‰∏ãÊ†á
                 node->index = index;
-                // Áî±‰∫éÊúÄÂêéÁöÑelementÂú∞ÂùÄÂèò‰∏∫nodeÔºåÈúÄË¶ÅÈáçÊñ∞ËøûÊé•Áà∂Â≠êÁªìÁÇπ
-                // ÊòØÊ†πËäÇÁÇπ
+                // ”…”⁄◊Ó∫Ûµƒelementµÿ÷∑±‰Œ™node£¨–Ë“™÷ÿ–¬¡¨Ω”∏∏◊”Ω·µ„
+                //  «∏˘Ω⁄µ„
                 if (node->parent == null)
                 {
-                    m_Head->root = node;
+                    (m_Head->map + node->belongs)->root = node;
                 }
-                // ÊòØÁà∂ËäÇÁÇπÁöÑÂ∑¶Â≠êËäÇÁÇπ
+                //  «∏∏Ω⁄µ„µƒ◊Û◊”Ω⁄µ„
                 else if (node->key.CompareTo(node->parent->key) < 0)
                 {
                     node->parent->left = node;
                 }
-                // ÊòØÁà∂ËäÇÁÇπÁöÑÂè≥Â≠êËäÇÁÇπ
+                //  «∏∏Ω⁄µ„µƒ”“◊”Ω⁄µ„
                 else
                 {
                     node->parent->right = node;
                 }
-                // ÈáçËøûÊé•Â≠êËäÇÁÇπ
+                // ÷ÿ¡¨Ω”◊”Ω⁄µ„
                 if (node->left != null)
                 {
                     node->left->parent = node;
@@ -1015,56 +1017,6 @@ namespace E.Collections.Unsafe
 #endif
         }
 
-        [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
-        public void Check()
-        {
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
-            CheckExists();
-            int pathBlackCount = GetPathBlackCount(m_Head->root);
-            if (pathBlackCount == 0)
-            {
-                throw new Exception("This is not a red-black-tree.");
-            }
-#endif
-        }
-
-        [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
-        public void LockedCheck()
-        {
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
-            CheckExists();
-            Lock();
-            int pathBlackCount = GetPathBlackCount(m_Head->root);
-            if (pathBlackCount == 0)
-            {
-                Unlock();
-                throw new Exception("This is not a red-black-tree.");
-            }
-            Unlock();
-#endif
-        }
-
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
-        private int GetPathBlackCount(Node* node)
-        {
-            int leftCount = 0, rightCount = 0;
-            if (node != null)
-            {
-                leftCount = GetPathBlackCount(node->left);
-                rightCount = GetPathBlackCount(node->right);
-            }
-            if (node != null && node->color == Color.Red)
-            {
-                bool leftBlack = node->left == null || node->left->color == Color.Black;
-                bool rightBlack = node->right == null || node->right->color == Color.Black;
-                return (leftBlack && rightBlack && (leftCount == rightCount)) ? leftCount : 0;
-            }
-            else
-            {
-                return (leftCount == rightCount ? leftCount : 0) + 1;
-            }
-        }
-#endif
         #endregion
     }
 }
