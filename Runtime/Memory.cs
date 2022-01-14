@@ -60,6 +60,21 @@ namespace E.Collections.Unsafe
             return UnsafeUtility.Malloc(size, alignment, allocator);
         }
 
+        public static void Clear<T>(void* ptr, long count) where T : struct
+        {
+            UnsafeUtility.MemClear(ptr, SizeOf<T>() * count);
+        }
+
+        public static void Clear(Type type, void* ptr, long count)
+        {
+            UnsafeUtility.MemClear(ptr, SizeOf(type) * count);
+        }
+
+        public static void Clear(void* ptr, long size)
+        {
+            UnsafeUtility.MemClear(ptr, size);
+        }
+
         public static void Free(void* ptr, Allocator allocator)
         {
             UnsafeUtility.Free(ptr, allocator);
