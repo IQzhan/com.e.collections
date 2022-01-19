@@ -19,7 +19,22 @@ namespace E.Collections
         public int ElementSize { get; }
     }
 
-    public interface IThreadSafe { }
+    public interface ILockable
+    {
+        public void Lock();
+        public void Unlock();
+    }
+
+    public interface ILockable<Key>
+    {
+        public void Lock(Key key);
+        public void Unlock(Key key);
+    }
+
+    public unsafe interface IPtrIndexable
+    {
+        public byte* this[int index] { get; }
+    }
 
     public unsafe interface IPtrCompareCallback
     {

@@ -6,7 +6,7 @@ using Unity.Collections.LowLevel.Unsafe;
 
 namespace E.Collections.Unsafe
 {
-    public unsafe struct UnsafeChunkedList : ICollection, IChunked, IResizeable, IDisposable, IEquatable<UnsafeChunkedList>
+    public unsafe struct UnsafeChunkedList : ICollection, IPtrIndexable, IChunked, IResizeable, ILockable, IDisposable, IEquatable<UnsafeChunkedList>
     {
         #region No ThreadSafe
 
@@ -88,21 +88,21 @@ namespace E.Collections.Unsafe
         public byte* Insert(int index)
         {
             CheckExists();
-            CheckIndexInsertNoLock(index);
+            CheckIndexInsert(index);
             return InternalInsert(index);
         }
 
         public byte* Get(int index)
         {
             CheckExists();
-            CheckIndexNoLock(index);
+            CheckIndex(index);
             return GetDataPtr(index);
         }
 
         public void Remove(int index)
         {
             CheckExists();
-            CheckIndexNoLock(index);
+            CheckIndex(index);
             InternalRemove(index);
         }
 
@@ -110,7 +110,7 @@ namespace E.Collections.Unsafe
         {
             CheckExists();
             int index = m_Head->elementCount - 1;
-            CheckIndexNoLock(index);
+            CheckIndex(index);
             m_Head->elementCount = index;
         }
 
@@ -121,8 +121,46 @@ namespace E.Collections.Unsafe
         public void SwapLastAndRemove(int index)
         {
             CheckExists();
-            CheckIndexNoLock(index);
+            CheckIndex(index);
             InternalSwapLastAndRemove(index);
+        }
+
+        private struct ReadOnlyCompareCallback<Compare>
+            where Compare : unmanaged, IPtrCompareCallback
+        {
+            public static readonly Compare function;
+        }
+
+        public bool BinarySearch<Compare>(byte* value, out int index)
+            where Compare : unmanaged, IPtrCompareCallback
+        {
+            int low = 0;
+            int high = m_Head->elementCount - 1;
+            while (low <= high)
+            {
+                int mid = (low + high) / 2;
+                byte* midValue = GetDataPtr(mid);
+                int compare = ReadOnlyCompareCallback<Compare>.function.Compare(midValue, value);
+                if (compare < 0)
+                {
+                    // in right
+                    low = mid + 1;
+                }
+                else if (compare > 0)
+                {
+                    // in left
+                    high = mid - 1;
+                }
+                else
+                {
+                    // match
+                    index = mid;
+                    return true;
+                }
+            }
+            // the last search index
+            index = low;
+            return false;
         }
 
         public void Extend(int count)
@@ -150,6 +188,20 @@ namespace E.Collections.Unsafe
             m_Head = null;
         }
 
+        public void Lock()
+        {
+            CheckExists();
+            ref var lockedMark = ref m_Head->lockedMark;
+            while (1 == Interlocked.Exchange(ref lockedMark, 1)) ;
+        }
+
+        public void Unlock()
+        {
+            CheckExists();
+            ref var lockedMark = ref m_Head->lockedMark;
+            Interlocked.Exchange(ref lockedMark, 0);
+        }
+
         public override bool Equals(object obj) => obj is UnsafeChunkedList list && m_Head == list.m_Head;
 
         public bool Equals(UnsafeChunkedList other) => m_Head == other.m_Head;
@@ -159,154 +211,6 @@ namespace E.Collections.Unsafe
         public static bool operator ==(UnsafeChunkedList left, UnsafeChunkedList right) => left.m_Head == right.m_Head;
 
         public static bool operator !=(UnsafeChunkedList left, UnsafeChunkedList right) => left.m_Head != right.m_Head;
-
-        #endregion
-
-        #region ThreadSafe
-
-        public ThreadSafe AsThreadSafe() => new ThreadSafe(this);
-
-        public struct ThreadSafe : ICollection, IChunked, IResizeable, IThreadSafe, IEquatable<ThreadSafe>
-        {
-            public UnsafeChunkedList AsNoThreadSafe() => m_Instance;
-
-            public ThreadSafe(UnsafeChunkedList instance) => m_Instance = instance;
-
-            private readonly UnsafeChunkedList m_Instance;
-
-            public bool IsCreated => m_Instance.IsCreated;
-
-            public int Count => m_Instance.LockedCount();
-
-            public long ChunkSize => m_Instance.ChunkSize;
-
-            public int ChunkCount => m_Instance.LockedChunkCount();
-
-            public int ElementSize => m_Instance.ElementSize;
-
-            public byte* this[int index] => m_Instance.LockedGet(index);
-
-            public byte* Add() => m_Instance.LockedAdd();
-
-            public byte* Insert(int index) => m_Instance.LockedInsert(index);
-
-            public byte* Get(int index) => m_Instance.LockedGet(index);
-
-            public void Remove(int index) => m_Instance.LockedRemove(index);
-
-            public void RemoveLast() => m_Instance.LockedRemoveLast();
-
-            /// <summary>
-            /// Swap last and this then remove this.
-            /// </summary>
-            /// <param name="index"></param>
-            public void SwapLastAndRemove(int index) => m_Instance.LockedSwapLastAndRemove(index);
-
-            public void Clear() => m_Instance.LockedClear();
-
-            public void Extend(int count) => m_Instance.LockedExtend(count);
-
-            public override bool Equals(object obj) => obj is ThreadSafe safe && m_Instance == safe.m_Instance;
-
-            public bool Equals(ThreadSafe other) => m_Instance == other.m_Instance;
-
-            public override int GetHashCode() => m_Instance.GetHashCode();
-
-            public static bool operator ==(ThreadSafe left, ThreadSafe right) => left.m_Instance == right.m_Instance;
-
-            public static bool operator !=(ThreadSafe left, ThreadSafe right) => left.m_Instance != right.m_Instance;
-        }
-
-        private int LockedCount()
-        {
-            if (!IsCreated) return 0;
-            Lock();
-            int count = m_Head->elementCount;
-            Unlock();
-            return count;
-        }
-
-        private int LockedChunkCount()
-        {
-            if (!IsCreated) return 0;
-            Lock();
-            int count = m_Head->chunkCount;
-            Unlock();
-            return count;
-        }
-
-        private byte* LockedAdd()
-        {
-            CheckExists();
-            Lock();
-            byte* result = InternalAdd();
-            Unlock();
-            return result;
-        }
-
-        private byte* LockedInsert(int index)
-        {
-            CheckExists();
-            Lock();
-            CheckIndexInsert(index);
-            byte* result = InternalInsert(index);
-            Unlock();
-            return result;
-        }
-
-        private byte* LockedGet(int index)
-        {
-            CheckExists();
-            Lock();
-            CheckIndex(index);
-            byte* result = GetDataPtr(index);
-            Unlock();
-            return result;
-        }
-
-        private void LockedRemove(int index)
-        {
-            CheckExists();
-            Lock();
-            CheckIndex(index);
-            InternalRemove(index);
-            Unlock();
-        }
-
-        private void LockedRemoveLast()
-        {
-            CheckExists();
-            Lock();
-            int index = m_Head->elementCount - 1;
-            CheckIndex(index);
-            m_Head->elementCount = index;
-            Unlock();
-        }
-
-        private void LockedSwapLastAndRemove(int index)
-        {
-            CheckExists();
-            Lock();
-            CheckIndex(index);
-            InternalSwapLastAndRemove(index);
-            Unlock();
-        }
-
-        private void LockedExtend(int count)
-        {
-            CheckExists();
-            Lock();
-            InternalExtend(count);
-            Unlock();
-        }
-
-        private void LockedClear()
-        {
-            CheckExists();
-            Lock();
-            m_Head->elementCount = 0;
-            Unlock();
-        }
 
         #endregion
 
@@ -390,49 +294,6 @@ namespace E.Collections.Unsafe
             return *(m_Head->chunks + inChunk) + posInChunk;
         }
 
-        private bool BinarySearch<Compare>(byte* value, out int index)
-            where Compare : struct, IPtrCompareCallback
-        {
-            Compare ptrCompare = new Compare();
-            int low = 0;
-            int high = m_Head->elementCount - 1;
-            while (low <= high)
-            {
-                int mid = (low + high) / 2;
-                byte* midValue = GetDataPtr(mid);
-                int compare = ptrCompare.Compare(midValue, value);
-                if (compare < 0)
-                {
-                    // in right
-                    low = mid + 1;
-                }
-                else if (compare > 0)
-                {
-                    // in left
-                    high = mid - 1;
-                }
-                else
-                {
-                    // match
-                    index = mid;
-                    return true;
-                }
-            }
-            // the last search index
-            index = low;
-            return false;
-        }
-
-        private void Lock()
-        {
-            while (1 == Interlocked.Exchange(ref m_Head->lockedMark, 1)) ;
-        }
-
-        private void Unlock()
-        {
-            Interlocked.Exchange(ref m_Head->lockedMark, 0);
-        }
-
         #endregion
 
         #region Check
@@ -454,36 +315,13 @@ namespace E.Collections.Unsafe
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             if (index < 0 || index >= m_Head->elementCount)
             {
-                Unlock();
                 throw new IndexOutOfRangeException($"{nameof(UnsafeChunkedList)} index must >= 0 && < Count.");
             }
 #endif
         }
 
-        [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
-        private void CheckIndexNoLock(int index)
-        {
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
-            if (index < 0 || index >= m_Head->elementCount)
-            {
-                throw new IndexOutOfRangeException($"{nameof(UnsafeChunkedList)} index must >= 0 && < Count.");
-            }
-#endif
-        }
         [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
         private void CheckIndexInsert(int index)
-        {
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
-            if (index < 0 || index > m_Head->elementCount)
-            {
-                Unlock();
-                throw new IndexOutOfRangeException($"{nameof(UnsafeChunkedList)} index must >= 0 && < Count.");
-            }
-#endif
-        }
-
-        [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
-        private void CheckIndexInsertNoLock(int index)
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             if (index < 0 || index > m_Head->elementCount)

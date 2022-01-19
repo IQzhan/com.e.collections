@@ -10,7 +10,7 @@ namespace E.Collections.Unsafe
     /// Red-Black-Tree
     /// </summary>
     /// <typeparam name="Key"></typeparam>
-    public unsafe struct UnsafeChunkedSet<Key> : ICollection, IChunked, IResizeable, IDisposable, IEquatable<UnsafeChunkedSet<Key>>
+    public unsafe struct UnsafeChunkedSet<Key> : ICollection, IPtrIndexable, IChunked, IResizeable, ILockable, IDisposable, IEquatable<UnsafeChunkedSet<Key>>
         where Key : unmanaged, IComparable<Key>
     {
         #region No ThreadSafe
@@ -125,7 +125,7 @@ namespace E.Collections.Unsafe
         public Key GetKeyByIndex(int index)
         {
             CheckExists();
-            CheckIndexNoLock(index);
+            CheckIndex(index);
             Key key = ((Node*)m_Head->data[index])->key;
             return key;
         }
@@ -133,7 +133,7 @@ namespace E.Collections.Unsafe
         public byte* GetValueByIndex(int index)
         {
             CheckExists();
-            CheckIndexNoLock(index);
+            CheckIndex(index);
             byte* value = m_Head->data[index] + m_Head->preSize;
             return value;
         }
@@ -141,7 +141,7 @@ namespace E.Collections.Unsafe
         public void GetKeyValueByIndex(int index, out Key key, out byte* value)
         {
             CheckExists();
-            CheckIndexNoLock(index);
+            CheckIndex(index);
             byte* node = m_Head->data[index];
             key = ((Node*)node)->key;
             value = node + m_Head->preSize;
@@ -160,10 +160,10 @@ namespace E.Collections.Unsafe
             return InternalSet(key);
         }
 
-        public void Remove(Key key)
+        public bool Remove(Key key)
         {
             CheckExists();
-            InternalRemove(key);
+            return InternalRemove(key);
         }
 
         public void Extend(int count)
@@ -188,6 +188,20 @@ namespace E.Collections.Unsafe
             m_Head = null;
         }
 
+        public void Lock()
+        {
+            CheckExists();
+            ref var lockedMark = ref m_Head->lockedMark;
+            while (1 == Interlocked.Exchange(ref lockedMark, 1)) ;
+        }
+
+        public void Unlock()
+        {
+            CheckExists();
+            ref var lockedMark = ref m_Head->lockedMark;
+            Interlocked.Exchange(ref lockedMark, 0);
+        }
+
         public override bool Equals(object obj) => obj is UnsafeChunkedSet<Key> set && m_Head == set.m_Head;
 
         public bool Equals(UnsafeChunkedSet<Key> other) => m_Head == other.m_Head;
@@ -197,203 +211,6 @@ namespace E.Collections.Unsafe
         public static bool operator ==(UnsafeChunkedSet<Key> left, UnsafeChunkedSet<Key> right) => left.m_Head == right.m_Head;
 
         public static bool operator !=(UnsafeChunkedSet<Key> left, UnsafeChunkedSet<Key> right) => left.m_Head != right.m_Head;
-
-        #endregion
-
-        #region ThreadSafe
-
-        public ThreadSafe AsThreadSafe() => new ThreadSafe(this);
-
-        public struct ThreadSafe : ICollection, IChunked, IResizeable, IThreadSafe, IEquatable<ThreadSafe>
-        {
-            public UnsafeChunkedSet<Key> AsNoThreadSafe() => m_Instance;
-
-            public ThreadSafe(UnsafeChunkedSet<Key> instance) => m_Instance = instance;
-
-            private readonly UnsafeChunkedSet<Key> m_Instance;
-
-            public bool IsCreated => m_Instance.IsCreated;
-
-            public int Count => m_Instance.LockedCount();
-
-            public long ChunkSize => m_Instance.ChunkSize;
-
-            public int ChunkCount => m_Instance.LockedChunkCount();
-
-            public int ElementSize => m_Instance.ElementSize;
-
-            public byte* this[int index] => m_Instance.LockedGetValueByIndex(index);
-
-            public bool Contains(Key key) => m_Instance.LockedContains(key);
-
-            public int IndexOf(Key key) => m_Instance.LockedIndexOf(key);
-
-            public int IndexOf(Key key, out byte* value) => m_Instance.LockedIndexOf(key, out value);
-
-            public Key GetKeyByIndex(int index) => m_Instance.LockedGetKeyByIndex(index);
-
-            public byte* GetValueByIndex(int index) => m_Instance.LockedGetValueByIndex(index);
-
-            public void GetKeyValueByIndex(int index, out Key key, out byte* value) => m_Instance.LockedGetKeyValueByIndex(index, out key, out value);
-
-            public Key GetKeyByValue(byte* value) => m_Instance.LockedGetKeyByValue(value);
-
-            public byte* Set(Key key) => m_Instance.LockedSet(key);
-
-            public void Remove(Key key) => m_Instance.LockedRemove(key);
-
-            public void Clear() => m_Instance.LockedClear();
-
-            public void Extend(int count) => m_Instance.LockedExtend(count);
-
-            public override bool Equals(object obj) => obj is ThreadSafe safe && m_Instance == safe.m_Instance;
-
-            public bool Equals(ThreadSafe other) => m_Instance == other.m_Instance;
-
-            public override int GetHashCode() => m_Instance.GetHashCode();
-
-            public static bool operator ==(ThreadSafe left, ThreadSafe right) => left.m_Instance == right.m_Instance;
-
-            public static bool operator !=(ThreadSafe left, ThreadSafe right) => left.m_Instance != right.m_Instance;
-
-            [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
-            public void Check()
-            {
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
-
-                m_Instance.LockedCheck();
-#endif
-            }
-        }
-
-        private int LockedCount()
-        {
-            if (!IsCreated) return 0;
-            Lock();
-            int count = m_Head->data.Count;
-            Unlock();
-            return count;
-        }
-
-        private int LockedChunkCount()
-        {
-            if (!IsCreated) return 0;
-            Lock();
-            int count = m_Head->data.ChunkCount;
-            Unlock();
-            return count;
-        }
-
-        private bool LockedContains(Key key)
-        {
-            CheckExists();
-            Lock();
-            bool result = TryGetNode(key, out var _);
-            Unlock();
-            return result;
-        }
-
-        private int LockedIndexOf(Key key)
-        {
-            CheckExists();
-            Lock();
-            if (TryGetNode(key, out Node* node))
-            {
-                Unlock();
-                return node->index;
-            }
-            Unlock();
-            return -1;
-        }
-
-        private int LockedIndexOf(Key key, out byte* value)
-        {
-            CheckExists();
-            Lock();
-            if (TryGetNode(key, out Node* node))
-            {
-                value = (byte*)node + m_Head->preSize;
-                Unlock();
-                return node->index;
-            }
-            value = null;
-            Unlock();
-            return -1;
-        }
-
-        private Key LockedGetKeyByIndex(int index)
-        {
-            CheckExists();
-            Lock();
-            CheckIndex(index);
-            Key key = ((Node*)m_Head->data[index])->key;
-            Unlock();
-            return key;
-        }
-
-        private byte* LockedGetValueByIndex(int index)
-        {
-            CheckExists();
-            Lock();
-            CheckIndex(index);
-            byte* value = m_Head->data[index] + m_Head->preSize;
-            Unlock();
-            return value;
-        }
-
-        private void LockedGetKeyValueByIndex(int index, out Key key, out byte* value)
-        {
-            CheckExists();
-            Lock();
-            CheckIndex(index);
-            byte* node = m_Head->data[index];
-            key = ((Node*)node)->key;
-            value = node + m_Head->preSize;
-            Unlock();
-        }
-
-        private Key LockedGetKeyByValue(byte* value)
-        {
-            CheckExists();
-            Lock();
-            Key key = ((Node*)(value - m_Head->preSize))->key;
-            Unlock();
-            return key;
-        }
-
-        private byte* LockedSet(Key key)
-        {
-            CheckExists();
-            Lock();
-            byte* result = InternalSet(key);
-            Unlock();
-            return result;
-        }
-
-        private void LockedRemove(Key key)
-        {
-            CheckExists();
-            Lock();
-            InternalRemove(key);
-            Unlock();
-        }
-
-        private void LockedExtend(int count)
-        {
-            CheckExists();
-            Lock();
-            m_Head->data.Extend(count);
-            Unlock();
-        }
-
-        private void LockedClear()
-        {
-            CheckExists();
-            Lock();
-            m_Head->data.Clear();
-            m_Head->root = null;
-            Unlock();
-        }
 
         #endregion
 
@@ -470,11 +287,11 @@ namespace E.Collections.Unsafe
             return res;
         }
 
-        private void InternalRemove(Key key)
+        private bool InternalRemove(Key key)
         {
             if (m_Head->root == null)
             {
-                return;
+                return false;
             }
             Node* toDelete = m_Head->root;
             while (toDelete != null)
@@ -495,7 +312,7 @@ namespace E.Collections.Unsafe
             }
             if (toDelete == null)
             {
-                return;
+                return false;
             }
             Node* forReplace = null;
             bool hasLeft, hasRight;
@@ -524,6 +341,7 @@ namespace E.Collections.Unsafe
             RemoveFixup(toDelete);
             // 释放
             Free(toDelete);
+            return true;
         }
 
         private void AddFixup(Node* inserted)
@@ -967,16 +785,6 @@ namespace E.Collections.Unsafe
             }
         }
 
-        private void Lock()
-        {
-            while (1 == Interlocked.Exchange(ref m_Head->lockedMark, 1)) ;
-        }
-
-        private void Unlock()
-        {
-            Interlocked.Exchange(ref m_Head->lockedMark, 0);
-        }
-
         #endregion
 
         #region Check
@@ -998,25 +806,13 @@ namespace E.Collections.Unsafe
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             if (index < 0 || index >= m_Head->data.Count)
             {
-                Unlock();
                 throw new IndexOutOfRangeException($"{nameof(UnsafeChunkedSet<Key>)} index must >= 0 && < Count.");
             }
 #endif
         }
 
         [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
-        private void CheckIndexNoLock(int index)
-        {
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
-            if (index < 0 || index >= m_Head->data.Count)
-            {
-                throw new IndexOutOfRangeException($"{nameof(UnsafeChunkedSet<Key>)} index must >= 0 && < Count.");
-            }
-#endif
-        }
-
-        [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
-        public void Check()
+        internal void Check()
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             CheckExists();
@@ -1025,22 +821,6 @@ namespace E.Collections.Unsafe
             {
                 throw new Exception("This is not a red-black-tree.");
             }
-#endif
-        }
-
-        [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
-        public void LockedCheck()
-        {
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
-            CheckExists();
-            Lock();
-            int pathBlackCount = GetPathBlackCount(m_Head->root);
-            if (pathBlackCount == 0)
-            {
-                Unlock();
-                throw new Exception("This is not a red-black-tree.");
-            }
-            Unlock();
 #endif
         }
 
