@@ -152,9 +152,10 @@ namespace E.Collections.Test
 
             public void Execute(int index)
             {
-                set.Lock();
-                *(int*)set.Set(array[index]) = array[index];
-                set.Unlock();
+                using (set.GetLock())
+                {
+                    *(int*)set.Set(array[index]) = array[index];
+                }
             }
         }
 
@@ -168,11 +169,12 @@ namespace E.Collections.Test
             public void Execute(int index)
             {
                 int key = array[index];
-                set.Lock();
-                Assert.IsTrue(set.Contains(key));
-                set.Remove(key);
-                Assert.IsFalse(set.Contains(key));
-                set.Unlock();
+                using (set.GetLock())
+                {
+                    Assert.IsTrue(set.Contains(key));
+                    set.Remove(key);
+                    Assert.IsFalse(set.Contains(key));
+                }
             }
         }
     }

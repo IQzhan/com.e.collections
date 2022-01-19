@@ -1,6 +1,5 @@
 using System;
 using System.Diagnostics;
-using System.Threading;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 
@@ -8,7 +7,7 @@ namespace E.Collections.Unsafe
 {
     public unsafe struct UnsafeChunkedList : ICollection, IPtrIndexable, IChunked, IResizeable, ILockable, IDisposable, IEquatable<UnsafeChunkedList>
     {
-        #region No ThreadSafe
+        #region Main
 
         private struct Head
         {
@@ -188,18 +187,10 @@ namespace E.Collections.Unsafe
             m_Head = null;
         }
 
-        public void Lock()
+        public Lock GetLock()
         {
             CheckExists();
-            ref var lockedMark = ref m_Head->lockedMark;
-            while (1 == Interlocked.Exchange(ref lockedMark, 1)) ;
-        }
-
-        public void Unlock()
-        {
-            CheckExists();
-            ref var lockedMark = ref m_Head->lockedMark;
-            Interlocked.Exchange(ref lockedMark, 0);
+            return new Lock(&m_Head->lockedMark);
         }
 
         public override bool Equals(object obj) => obj is UnsafeChunkedList list && m_Head == list.m_Head;
