@@ -21,14 +21,12 @@ namespace E.Collections
 
     public interface ILockable
     {
-        public void Lock();
-        public void Unlock();
+        public Lock GetLock();
     }
 
     public interface ILockable<Key>
     {
-        public void Lock(Key key);
-        public void Unlock(Key key);
+        public Lock GetLock(Key key);
     }
 
     public unsafe interface IPtrIndexable
