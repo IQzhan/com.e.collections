@@ -18,7 +18,7 @@ namespace E.Collections.Test
                 }
                 for (int i = 0; i < 20; i++)
                 {
-                    Assert.AreEqual(i, *(int*)queue.Peek(i));
+                    Assert.AreEqual(i, *(int*)queue.Get(i));
                 }
                 Assert.AreEqual(20, queue.Count);
             }

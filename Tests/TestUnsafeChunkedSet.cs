@@ -110,13 +110,13 @@ namespace E.Collections.Test
                     var setJob = new SetJob0()
                     {
                         array = array,
-                        set = tree.AsThreadSafe(),
+                        set = tree,
                         count = count
                     };
                     var setJob1 = new SetJob1()
                     {
                         array = array,
-                        set = tree.AsThreadSafe()
+                        set = tree
                     };
                     for (int i = 0; i < count; i++)
                     {
@@ -146,7 +146,7 @@ namespace E.Collections.Test
         [BurstCompile]
         struct SetJob0 : IJobParallelFor
         {
-            public UnsafeChunkedSet<int>.ThreadSafe set;
+            public UnsafeChunkedSet<int> set;
 
             public NativeArray<int> array;
 
@@ -154,24 +154,28 @@ namespace E.Collections.Test
 
             public void Execute(int index)
             {
+                set.Lock();
                 *(int*)set.Set(array[index]) = array[index];
+                set.Unlock();
             }
         }
 
         //[BurstCompile]
         struct SetJob1 : IJobParallelFor
         {
-            public UnsafeChunkedSet<int>.ThreadSafe set;
+            public UnsafeChunkedSet<int> set;
 
             public NativeArray<int> array;
 
             public void Execute(int index)
             {
                 int key = array[index];
+                set.Lock();
                 Assert.IsTrue(set.Contains(key));
                 set.Remove(key);
                 Assert.IsFalse(set.Contains(key));
                 set.Check();
+                set.Unlock();
             }
         }
     }

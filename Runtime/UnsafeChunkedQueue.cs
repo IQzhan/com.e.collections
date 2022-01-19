@@ -6,7 +6,7 @@ using Unity.Collections.LowLevel.Unsafe;
 
 namespace E.Collections.Unsafe
 {
-    public unsafe struct UnsafeChunkedQueue : ICollection, IChunked, IResizeable, IDisposable, IEquatable<UnsafeChunkedQueue>
+    public unsafe struct UnsafeChunkedQueue : ICollection, IPtrIndexable, IChunked, IResizeable, ILockable, IDisposable, IEquatable<UnsafeChunkedQueue>
     {
         #region No ThreadSafe
 
@@ -84,7 +84,7 @@ namespace E.Collections.Unsafe
         /// </summary>
         /// <param name="index"></param>
         /// <returns></returns>
-        public byte* this[int index] => Peek(index);
+        public byte* this[int index] => Get(index);
 
         /// <summary>
         /// Enqueue.
@@ -111,10 +111,10 @@ namespace E.Collections.Unsafe
         /// </summary>
         /// <param name="index"></param>
         /// <returns></returns>
-        public byte* Peek(int index)
+        public byte* Get(int index)
         {
             CheckExists();
-            CheckIndexNoLock(index);
+            CheckIndex(index);
             return InternalPeek(index);
         }
 
@@ -154,6 +154,20 @@ namespace E.Collections.Unsafe
             m_Head = null;
         }
 
+        public void Lock()
+        {
+            CheckExists();
+            ref var lockedMark = ref m_Head->lockedMark;
+            while (1 == Interlocked.Exchange(ref lockedMark, 1)) ;
+        }
+
+        public void Unlock()
+        {
+            CheckExists();
+            ref var lockedMark = ref m_Head->lockedMark;
+            Interlocked.Exchange(ref lockedMark, 0);
+        }
+
         public override bool Equals(object obj) => obj is UnsafeChunkedQueue queue && m_Head == queue.m_Head;
 
         public bool Equals(UnsafeChunkedQueue other) => m_Head == other.m_Head;
@@ -163,116 +177,6 @@ namespace E.Collections.Unsafe
         public static bool operator ==(UnsafeChunkedQueue left, UnsafeChunkedQueue right) => left.m_Head == right.m_Head;
 
         public static bool operator !=(UnsafeChunkedQueue left, UnsafeChunkedQueue right) => left.m_Head != right.m_Head;
-
-        #endregion
-
-        #region ThreadSafe
-
-        public ThreadSafe AsThreadSafe() => new ThreadSafe(this);
-
-        public struct ThreadSafe : ICollection, IChunked, IResizeable, IThreadSafe, IEquatable<ThreadSafe>
-        {
-            public UnsafeChunkedQueue AsNoThreadSafe() => m_Instance;
-
-            public ThreadSafe(UnsafeChunkedQueue instance) => m_Instance = instance;
-
-            private readonly UnsafeChunkedQueue m_Instance;
-
-            public bool IsCreated => m_Instance.IsCreated;
-
-            public int Count => m_Instance.LockedCount();
-
-            public long ChunkSize => m_Instance.ChunkSize;
-
-            public int ChunkCount => m_Instance.LockedChunkCount();
-
-            public int ElementSize => m_Instance.ElementSize;
-
-            public byte* this[int index] => m_Instance.LockedPeek(index);
-
-            public byte* Enqueue() => m_Instance.LockedEnqueue();
-
-            public byte* Dequeue() => m_Instance.LockedDequeue();
-
-            public byte* Peek(int index) => m_Instance.LockedPeek(index);
-
-            public void Clear() => m_Instance.LockedClear();
-
-            public void Extend(int count) => m_Instance.LockedExtend(count);
-
-            public override bool Equals(object obj) => obj is ThreadSafe safe && m_Instance == safe.m_Instance;
-
-            public bool Equals(ThreadSafe other) => m_Instance == other.m_Instance;
-
-            public override int GetHashCode() => m_Instance.GetHashCode();
-
-            public static bool operator ==(ThreadSafe left, ThreadSafe right) => left.m_Instance == right.m_Instance;
-
-            public static bool operator !=(ThreadSafe left, ThreadSafe right) => left.m_Instance != right.m_Instance;
-        }
-
-        private int LockedCount()
-        {
-            if (!IsCreated) return 0;
-            Lock();
-            int count = m_Head->elementCount;
-            Unlock();
-            return count;
-        }
-
-        private int LockedChunkCount()
-        {
-            if (!IsCreated) return 0;
-            Lock();
-            int count = m_Head->chunkCount;
-            Unlock();
-            return count;
-        }
-
-        private byte* LockedEnqueue()
-        {
-            CheckExists();
-            Lock();
-            byte* result = InternalEnqueue();
-            Unlock();
-            return result;
-        }
-
-        private byte* LockedDequeue()
-        {
-            CheckExists();
-            Lock();
-            byte* result = InternalDequeue();
-            Unlock();
-            return result;
-        }
-
-        private byte* LockedPeek(int index)
-        {
-            CheckExists();
-            Lock();
-            CheckIndex(index);
-            byte* result = InternalPeek(index);
-            Unlock();
-            return result;
-        }
-
-        private void LockedExtend(int count)
-        {
-            CheckExists();
-            Lock();
-            InternalExtend(count);
-            Unlock();
-        }
-
-        private void LockedClear()
-        {
-            CheckExists();
-            Lock();
-            m_Head->elementCount = 0;
-            m_Head->elementStart = 0;
-            Unlock();
-        }
 
         #endregion
 
@@ -380,16 +284,6 @@ namespace E.Collections.Unsafe
             posInChunk = pos % m_Head->fixedChunkSize;
         }
 
-        private void Lock()
-        {
-            while (1 == Interlocked.Exchange(ref m_Head->lockedMark, 1)) ;
-        }
-
-        private void Unlock()
-        {
-            Interlocked.Exchange(ref m_Head->lockedMark, 0);
-        }
-
         #endregion
 
         #region Check
@@ -407,18 +301,6 @@ namespace E.Collections.Unsafe
 
         [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
         private void CheckIndex(int index)
-        {
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
-            if (index < 0 || index >= m_Head->elementCount)
-            {
-                Unlock();
-                throw new IndexOutOfRangeException($"{nameof(UnsafeChunkedQueue)} index must >= 0 && < Count.");
-            }
-#endif
-        }
-
-        [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
-        private void CheckIndexNoLock(int index)
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             if (index < 0 || index >= m_Head->elementCount)
