@@ -222,7 +222,7 @@ namespace E.Collections.Unsafe
 
         private Tree* GetTree(Key key)
         {
-            return m_Head->map + ((key.GetHashCode() % m_Head->mapLength) & 0x7FFFFFFF);
+            return m_Head->map + Math.Abs(key.GetHashCode() % m_Head->mapLength);
         }
 
         private bool TryGetNode(Tree* tree, Key key, out Node* node)
