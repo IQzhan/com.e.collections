@@ -32,11 +32,12 @@ namespace E.Collections.Unsafe
 
         private struct Node
         {
-            public int index;
-            public Color color;
             public Node* left;
             public Node* right;
             public Node* parent;
+            private uint m_marks;
+            public int index { get => (int)(m_marks & 0x7FFFFFFF); set => m_marks = m_marks & 0x80000000 | (uint)value; }
+            public Color color { get => (Color)(m_marks >> 31); set => m_marks = m_marks & 0x7FFFFFFF | (uint)value << 31; }
             public Key key;
         }
 

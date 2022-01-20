@@ -9,11 +9,13 @@ namespace E.Collections.Test
 {
     public unsafe class TestUnsafeChunkedHashSet
     {
+        private const int HashLength = 2039;
+
         [Test]
         public void TestUnsafeChunkedHashSetSet()
         {
             int valueSize = Memory.SizeOf<int>();
-            using (UnsafeChunkedHashSet<int> tree = new UnsafeChunkedHashSet<int>(500, valueSize, 1 << 16, Allocator.Temp))
+            using (UnsafeChunkedHashSet<int> tree = new UnsafeChunkedHashSet<int>(HashLength, valueSize, 1 << 16, Allocator.Temp))
             {
                 NativeArray<int> array = default;
                 try
@@ -55,7 +57,7 @@ namespace E.Collections.Test
         public void TestUnsafeChunkedHashSetRemove()
         {
             int valueSize = Memory.SizeOf<int>();
-            using (UnsafeChunkedHashSet<int> tree = new UnsafeChunkedHashSet<int>(500, valueSize, 1 << 16, Allocator.Temp))
+            using (UnsafeChunkedHashSet<int> tree = new UnsafeChunkedHashSet<int>(HashLength, valueSize, 1 << 16, Allocator.Temp))
             {
                 NativeArray<int> array = default;
                 try
@@ -98,7 +100,7 @@ namespace E.Collections.Test
         public void TestUnsafeChunkedHashSetJob()
         {
             int valueSize = Memory.SizeOf<int>();
-            using (UnsafeChunkedHashSet<int> tree = new UnsafeChunkedHashSet<int>(500, valueSize, 1 << 16, Allocator.Temp))
+            using (UnsafeChunkedHashSet<int> tree = new UnsafeChunkedHashSet<int>(HashLength, valueSize, 1 << 16, Allocator.Temp))
             {
                 NativeArray<int> array = default;
                 try

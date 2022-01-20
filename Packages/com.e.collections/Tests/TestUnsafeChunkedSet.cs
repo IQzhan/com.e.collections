@@ -38,7 +38,7 @@ namespace E.Collections.Test
                         int index = tree.IndexOf(key, out byte* v);
                         Assert.AreEqual(true, index != -1);
                         Assert.AreEqual(key, *(int*)v);
-                        tree.Check();
+                        //tree.Check();
                     }
                 }
                 catch
@@ -82,7 +82,7 @@ namespace E.Collections.Test
                         Assert.AreEqual(true, tree.Contains(key));
                         tree.Remove(key);
                         Assert.AreEqual(false, tree.Contains(key));
-                        tree.Check();
+                        //tree.Check();
                     }
                 }
                 catch
@@ -176,7 +176,7 @@ namespace E.Collections.Test
                     Assert.IsTrue(set.Contains(key));
                     set.Remove(key);
                     Assert.IsFalse(set.Contains(key));
-                    set.Check();
+                    //set.Check();
                 }
             }
         }
