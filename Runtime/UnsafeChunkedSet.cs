@@ -18,7 +18,7 @@ namespace E.Collections.Unsafe
         {
             public int existsMark;
             public Allocator allocator;
-            public int preSize;
+            public uint preSize;
             public int lockedMark;
             public Node* root;
             public UnsafeChunkedList data;
@@ -85,7 +85,7 @@ namespace E.Collections.Unsafe
             {
                 existsMark = ExistsMark,
                 allocator = allocator,
-                preSize = preSize,
+                preSize = (uint)preSize,
                 lockedMark = 0,
                 root = null,
                 data = new UnsafeChunkedList(nodeSize, chunkSize, allocator)

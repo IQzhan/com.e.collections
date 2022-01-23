@@ -218,7 +218,7 @@ namespace E.Collections.Unsafe
             InternalExtend(1);
             for (int i = m_Head->elementCount; i > index; i--)
             {
-                UnsafeUtility.MemCpy(GetDataPtr(i), GetDataPtr(i - 1), m_Head->elementSize);
+                Memory.Copy(GetDataPtr(i), GetDataPtr(i - 1), m_Head->elementSize);
             }
             m_Head->elementCount++;
             return GetDataPtr(index);
@@ -229,7 +229,7 @@ namespace E.Collections.Unsafe
             int count = m_Head->elementCount - 1;
             for (int i = index; i < count; i++)
             {
-                UnsafeUtility.MemCpy(GetDataPtr(i), GetDataPtr(i + 1), m_Head->elementSize);
+                Memory.Copy(GetDataPtr(i), GetDataPtr(i + 1), m_Head->elementSize);
             }
             m_Head->elementCount = count;
         }
@@ -240,7 +240,7 @@ namespace E.Collections.Unsafe
             if (index != lastIndex)
             {
                 //move last to this
-                UnsafeUtility.MemCpy(GetDataPtr(index), GetDataPtr(lastIndex), m_Head->elementSize);
+                Memory.Copy(GetDataPtr(index), GetDataPtr(lastIndex), m_Head->elementSize);
             }
             m_Head->elementCount = lastIndex;
         }
@@ -259,7 +259,7 @@ namespace E.Collections.Unsafe
                 long newSize = Memory.PtrSize * maxChunkCount;
                 byte** tempChunks = (byte**)Memory.Malloc<byte>(newSize, allocator);
                 byte** chunks = m_Head->chunks;
-                UnsafeUtility.MemCpy(tempChunks, chunks, oldSize);
+                Memory.Copy(tempChunks, chunks, oldSize);
                 Memory.Free(chunks, allocator);
                 m_Head->chunks = tempChunks;
                 m_Head->maxChunkCount = maxChunkCount;
