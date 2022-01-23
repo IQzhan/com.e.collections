@@ -108,6 +108,16 @@ namespace E.Collections.Unsafe
             return UnsafeUtility.SizeOf(helper) - UnsafeUtility.SizeOf(type);
         }
 
+        public static void Copy(void* destination, void* source, long size)
+        {
+            UnsafeUtility.MemCpy(destination, source, size);
+        }
+
+        public static void Move(void* destination, void* source, long size)
+        {
+            UnsafeUtility.MemMove(destination, source, size);
+        }
+
         public static object PtrToStructure(void* ptr, Type structureType)
         {
             return Marshal.PtrToStructure((IntPtr)ptr, structureType);

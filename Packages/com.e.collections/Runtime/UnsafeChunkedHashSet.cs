@@ -18,8 +18,8 @@ namespace E.Collections.Unsafe
         {
             public int existsMark;
             public Allocator allocator;
-            public int preSize;
-            public int mapLength;
+            public uint preSize;
+            public uint mapLength;
             public int lockedMark;
             public Tree* map;
             public UnsafeChunkedList data;
@@ -90,8 +90,8 @@ namespace E.Collections.Unsafe
             {
                 existsMark = ExistsMark,
                 allocator = allocator,
-                preSize = preSize,
-                mapLength = hashMapLength,
+                preSize = (uint)preSize,
+                mapLength = (uint)hashMapLength,
                 map = (Tree*)Memory.Malloc<Tree>(hashMapLength, allocator),
                 data = new UnsafeChunkedList(nodeSize, chunkSize, allocator)
             };
@@ -222,7 +222,7 @@ namespace E.Collections.Unsafe
 
         private Tree* GetTree(Key key)
         {
-            return m_Head->map + Math.Abs(key.GetHashCode() % m_Head->mapLength);
+            return m_Head->map + ((uint)key.GetHashCode() % m_Head->mapLength);
         }
 
         private bool TryGetNode(Tree* tree, Key key, out Node* node)

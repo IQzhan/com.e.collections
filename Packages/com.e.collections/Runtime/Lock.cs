@@ -7,9 +7,9 @@ namespace E.Collections
     {
         private readonly int* m_Location;
 
-        internal Lock(int* mark)
+        public Lock(int* location)
         {
-            m_Location = mark;
+            m_Location = location;
             InternalLock();
         }
 
