@@ -211,7 +211,7 @@ namespace E.Collections.Unsafe
                 long newSize = Memory.PtrSize * maxChunkCount;
                 byte** tempChunks = (byte**)Memory.Malloc<byte>(newSize, allocator);
                 byte** chunks = m_Head->chunks;
-                UnsafeUtility.MemCpy(tempChunks, chunks, oldSize);
+                Memory.Copy(tempChunks, chunks, oldSize);
                 Memory.Free(chunks, allocator);
                 m_Head->chunks = tempChunks;
                 m_Head->maxChunkCount = maxChunkCount;
@@ -232,7 +232,7 @@ namespace E.Collections.Unsafe
                     GetDataPos(endIndex, out int endInChunk, out long endPosInChunk);
                     byte* endAtChunk = *(m_Head->chunks + endInChunk);
                     byte* firstNewChunk = *(m_Head->chunks + m_Head->chunkCount);
-                    UnsafeUtility.MemCpy(firstNewChunk, endAtChunk, endPosInChunk + m_Head->elementSize);
+                    Memory.Copy(firstNewChunk, endAtChunk, endPosInChunk + m_Head->elementSize);
                     if (endInChunk > 0)
                     {
                         //move chunks [0, endInChunk) to m_Head->chunkCount
@@ -241,9 +241,9 @@ namespace E.Collections.Unsafe
                         long beforeSize = Memory.PtrSize * beforeCount;
                         long midSize = Memory.PtrSize * midCount;
                         byte** tempChunks = (byte**)Memory.Malloc(beforeSize, 1, Allocator.Temp);
-                        UnsafeUtility.MemCpy(tempChunks, m_Head->chunks, beforeSize);
-                        UnsafeUtility.MemMove(m_Head->chunks, m_Head->chunks + beforeCount, midSize);
-                        UnsafeUtility.MemCpy(m_Head->chunks + midCount, tempChunks, beforeSize);
+                        Memory.Copy(tempChunks, m_Head->chunks, beforeSize);
+                        Memory.Move(m_Head->chunks, m_Head->chunks + beforeCount, midSize);
+                        Memory.Copy(m_Head->chunks + midCount, tempChunks, beforeSize);
                         Memory.Free(tempChunks, Allocator.Temp);
                     }
                     // reset start
