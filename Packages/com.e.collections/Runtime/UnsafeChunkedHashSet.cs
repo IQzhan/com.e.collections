@@ -44,7 +44,6 @@ namespace E.Collections.Unsafe
             private uint m_marks;
             public int index { get => (int)(m_marks & 0x7FFFFFFF); set => m_marks = m_marks & 0x80000000 | (uint)value; }
             public Color color { get => (Color)(m_marks >> 31); set => m_marks = m_marks & 0x7FFFFFFF | (uint)value << 31; }
-            public int belongs;
             public Key key;
         }
 
@@ -656,7 +655,7 @@ namespace E.Collections.Unsafe
             nodeR->parent = nodeP;
             if (nodeP == null)
             {
-                (m_Head->map + node->belongs)->root = nodeR;
+                GetTree(node->key)->root = nodeR;
             }
             else if (nodeP->left == node)
             {
@@ -690,7 +689,7 @@ namespace E.Collections.Unsafe
             nodeL->parent = nodeP;
             if (nodeP == null)
             {
-                (m_Head->map + node->belongs)->root = nodeL;
+                GetTree(node->key)->root = nodeL;
             }
             else if (nodeP->left == node)
             {
@@ -722,14 +721,13 @@ namespace E.Collections.Unsafe
             int index = m_Head->data.Count;
             Node* ptr = (Node*)m_Head->data.Add();
             ptr->index = index;
-            ptr->belongs = (int)(tree - m_Head->map);
             return ptr;
         }
 
         private void Free(Node* node)
         {
             // 解除父连接
-            ref var root = ref (m_Head->map + node->belongs)->root;
+            ref var root = ref GetTree(node->key)->root;
             if (node == root)
             {
                 root = null;
@@ -759,7 +757,7 @@ namespace E.Collections.Unsafe
                 // 是根节点
                 if (node->parent == null)
                 {
-                    (m_Head->map + node->belongs)->root = node;
+                    GetTree(node->key)->root = node;
                 }
                 // 是父节点的左子节点
                 else if (node->key.CompareTo(node->parent->key) < 0)
