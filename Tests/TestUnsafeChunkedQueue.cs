@@ -14,11 +14,11 @@ namespace E.Collections.Test
             {
                 for (int i = 0; i < 20; i++)
                 {
-                    *(int*)queue.Enqueue() = i;
+                    *(int*)queue.Enqueue().Value = i;
                 }
-                for (int i = 0; i < 20; i++)
+                foreach(var v in queue)
                 {
-                    Assert.AreEqual(i, *(int*)queue.Get(i));
+                    Assert.AreEqual(v.Index, *(int*)v.Value);
                 }
                 Assert.AreEqual(20, queue.Count);
             }
@@ -33,11 +33,11 @@ namespace E.Collections.Test
             {
                 for (int i = 0; i < 20; i++)
                 {
-                    *(int*)queue.Enqueue() = i;
+                    *(int*)queue.Enqueue().Value = i;
                 }
                 for (int i = 0; i < 20; i++)
                 {
-                    int v = *(int*)queue.Dequeue();
+                    int v = *(int*)queue.Dequeue().Value;
                     Assert.AreEqual(i, v);
                     Assert.AreEqual(19 - i, queue.Count);
                 }

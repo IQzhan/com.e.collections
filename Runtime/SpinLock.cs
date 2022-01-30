@@ -3,11 +3,19 @@ using System.Threading;
 
 namespace E.Collections
 {
-    public unsafe struct Lock : IDisposable
+    public unsafe struct SpinLock : IDisposable
     {
         private readonly int* m_Location;
 
-        public Lock(int* location)
+        public SpinLock(ref int location)
+        {
+            fixed (int* ptr = &location)
+            {
+                m_Location = ptr;
+            }
+        }
+
+        public SpinLock(int* location)
         {
             m_Location = location;
             InternalLock();

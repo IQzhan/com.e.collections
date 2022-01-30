@@ -1,11 +1,20 @@
+using System.Collections;
+using System.Collections.Generic;
+
 namespace E.Collections
 {
-    public interface ICollection
+    public interface ICollection :
+        IEnumerable
     {
         public bool IsCreated { get; }
         public int Count { get; }
         public void Clear();
     }
+
+    public interface ICollection<T> :
+        IEnumerable<T>
+        where T : unmanaged
+    { }
 
     public interface IResizeable
     {
@@ -21,17 +30,12 @@ namespace E.Collections
 
     public interface ILockable
     {
-        public Lock GetLock();
+        public SpinLock GetLock();
     }
 
     public interface ILockable<Key>
     {
-        public Lock GetLock(Key key);
-    }
-
-    public unsafe interface IPtrIndexable
-    {
-        public byte* this[int index] { get; }
+        public SpinLock GetLock(Key key);
     }
 
     public unsafe interface IPtrCompareCallback
