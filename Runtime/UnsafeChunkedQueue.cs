@@ -19,7 +19,7 @@ namespace E.Collections.Unsafe
 
         private struct Head
         {
-            public int existsMark;
+            public ExistenceMark existenceMark;
             public Allocator allocator;
             public int elementSize;
             public int elementCount;
@@ -37,11 +37,11 @@ namespace E.Collections.Unsafe
         [NativeDisableUnsafePtrRestriction]
         private Head* m_Head;
 
-        private const int ExistsMark = 1000002;
+        private ExistenceMark m_ExistenceMark;
 
         private const int ExpendCount = 32;
 
-        public bool IsCreated => m_Head != null && m_Head->existsMark == ExistsMark;
+        public bool IsCreated => m_Head != null && m_Head->existenceMark == m_ExistenceMark;
 
         public int Count => IsCreated ? m_Head->elementCount : 0;
 
@@ -54,6 +54,7 @@ namespace E.Collections.Unsafe
         public UnsafeChunkedQueue(int elementSize, long chunkSize, Allocator allocator)
         {
             m_Head = default;
+            m_ExistenceMark = ExistenceMark.Null;
             CheckArguments(elementSize, chunkSize, allocator);
             InitializeHead(elementSize, chunkSize, allocator);
         }
@@ -132,7 +133,7 @@ namespace E.Collections.Unsafe
         public void Dispose()
         {
             CheckExists();
-            m_Head->existsMark = 0;
+            m_Head->existenceMark = ExistenceMark.Null;
             for (int i = 0; i < m_Head->chunkCount; i++)
             {
                 Memory.Free(*(m_Head->chunks + i), m_Head->allocator);
@@ -212,7 +213,7 @@ namespace E.Collections.Unsafe
             m_Head = (Head*)Memory.Malloc<Head>(1, allocator);
             *m_Head = new Head()
             {
-                existsMark = ExistsMark,
+                existenceMark = m_ExistenceMark = ExistenceMark.Create(),
                 allocator = allocator,
                 elementSize = elementSize,
                 elementCount = 0,
@@ -334,7 +335,7 @@ namespace E.Collections.Unsafe
         private void CheckExists()
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            if (m_Head == null || m_Head->existsMark != ExistsMark)
+            if (m_Head == null || m_Head->existenceMark != m_ExistenceMark)
             {
                 throw new NullReferenceException($"{nameof(UnsafeChunkedQueue)} is yet created or already disposed.");
             }
