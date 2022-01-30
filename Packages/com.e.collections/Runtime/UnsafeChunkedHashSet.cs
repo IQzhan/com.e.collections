@@ -24,7 +24,7 @@ namespace E.Collections.Unsafe
 
         private struct Head
         {
-            public int existsMark;
+            public ExistenceMark existenceMark;
 
             public Allocator allocator;
 
@@ -75,9 +75,9 @@ namespace E.Collections.Unsafe
         [NativeDisableUnsafePtrRestriction]
         private Head* m_Head;
 
-        private const int ExistsMark = 1000004;
+        private ExistenceMark m_ExistenceMark;
 
-        public bool IsCreated => m_Head != null && m_Head->existsMark == ExistsMark;
+        public bool IsCreated => m_Head != null && m_Head->existenceMark == m_ExistenceMark;
 
         public int Count => IsCreated ? m_Head->data.Count : 0;
 
@@ -90,6 +90,7 @@ namespace E.Collections.Unsafe
         public UnsafeChunkedHashSet(int hashMapLength, int valueSize, long chunkSize, Allocator allocator)
         {
             m_Head = default;
+            m_ExistenceMark = ExistenceMark.Null;
             CheckArguments(hashMapLength, valueSize, chunkSize, allocator);
             InitializeHead(hashMapLength, valueSize, chunkSize, allocator);
         }
@@ -155,7 +156,7 @@ namespace E.Collections.Unsafe
         public void Dispose()
         {
             CheckExists();
-            m_Head->existsMark = 0;
+            m_Head->existenceMark = ExistenceMark.Null;
             m_Head->data.Dispose();
             Memory.Free(m_Head, m_Head->allocator);
             m_Head = null;
@@ -235,7 +236,7 @@ namespace E.Collections.Unsafe
             m_Head = (Head*)Memory.Malloc(headSize + mapSize, 1, allocator);
             *m_Head = new Head()
             {
-                existsMark = ExistsMark,
+                existenceMark = m_ExistenceMark = ExistenceMark.Create(),
                 allocator = allocator,
                 lockedMark = 0,
                 nodeStructSize = nodeStructSize,
@@ -294,7 +295,7 @@ namespace E.Collections.Unsafe
         private void CheckExists()
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            if (m_Head == null || m_Head->existsMark != ExistsMark)
+            if (m_Head == null || m_Head->existenceMark != m_ExistenceMark)
             {
                 throw new NullReferenceException($"{nameof(UnsafeChunkedSet<Key>)} is yet created or already disposed.");
             }
