@@ -26,19 +26,21 @@ namespace E.Collections.Test
                     }
                     for (int i = 0; i < count; i++)
                     {
-                        *(int*)tree.Set(array[i]) = array[i];
+                        var node = tree.Set(array[i]);
+                        *(int*)node.Value = array[i];
                     }
                     for (int i = 0; i < tree.Count; i++)
                     {
-                        array[i] = *(int*)tree[i];
+                        array[i] = *(int*)tree[i].Value;
                     }
                     for (int i = 0; i < tree.Count; i++)
                     {
                         int key = array[i];
-                        int index = tree.IndexOf(key, out byte* v);
+                        tree.TryGetByKey(key, out var node);
+                        int index = node.Index;
                         Assert.AreEqual(true, index != -1);
-                        Assert.AreEqual(key, *(int*)v);
-                        //tree.Check();
+                        Assert.AreEqual(key, *(int*)node.Value);
+                        tree.Check();
                     }
                 }
                 catch
@@ -69,11 +71,12 @@ namespace E.Collections.Test
                     }
                     for (int i = 0; i < count; i++)
                     {
-                        *(int*)tree.Set(array[i]) = array[i];
+                        var node = tree.Set(array[i]);
+                        *(int*)node.Value = array[i];
                     }
                     for (int i = 0; i < tree.Count; i++)
                     {
-                        array[i] = *(int*)tree[i];
+                        array[i] = *(int*)tree[i].Value;
                     }
                     int treeCount = tree.Count;
                     for (int i = 0; i < treeCount; i++)
@@ -82,7 +85,7 @@ namespace E.Collections.Test
                         Assert.AreEqual(true, tree.Contains(key));
                         tree.Remove(key);
                         Assert.AreEqual(false, tree.Contains(key));
-                        //tree.Check();
+                        tree.Check();
                     }
                 }
                 catch
@@ -126,7 +129,7 @@ namespace E.Collections.Test
                     jobHandle.Complete();
                     for (int i = 0; i < tree.Count; i++)
                     {
-                        array[i] = *(int*)tree[i];
+                        array[i] = *(int*)tree[i].Value;
                     }
                     int treeCount = tree.Count;
                     JobHandle jobHandle1 = setJob1.Schedule(treeCount, 32);
@@ -156,7 +159,8 @@ namespace E.Collections.Test
             {
                 using (set.GetLock())
                 {
-                    *(int*)set.Set(array[index]) = array[index];
+                    var node = set.Set(array[index]);
+                    *(int*)node.Value = array[index];
                 }
             }
         }
