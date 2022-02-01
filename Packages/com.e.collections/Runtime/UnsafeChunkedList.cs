@@ -1,17 +1,25 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 
 namespace E.Collections.Unsafe
 {
-    public unsafe struct UnsafeChunkedList : ICollection, IPtrIndexable, IChunked, IResizeable, ILockable, IDisposable, IEquatable<UnsafeChunkedList>
+    public unsafe struct UnsafeChunkedList :
+        ICollection<UnsafeNode>,
+        IChunked,
+        IResizeable,
+        ILockable,
+        IDisposable,
+        IEquatable<UnsafeChunkedList>
     {
         #region Main
 
         private struct Head
         {
-            public int existsMark;
+            public ExistenceMark existenceMark;
             public Allocator allocator;
             public int elementSize;
             public int elementCount;
@@ -28,11 +36,11 @@ namespace E.Collections.Unsafe
         [NativeDisableUnsafePtrRestriction]
         private Head* m_Head;
 
-        private const int ExistsMark = 1000001;
+        private ExistenceMark m_ExistenceMark;
 
         private const int ExpendCount = 32;
 
-        public bool IsCreated => m_Head != null && m_Head->existsMark == ExistsMark;
+        public bool IsCreated => m_Head != null && m_Head->existenceMark == m_ExistenceMark;
 
         public int Count => IsCreated ? m_Head->elementCount : 0;
 
@@ -44,65 +52,55 @@ namespace E.Collections.Unsafe
 
         public UnsafeChunkedList(int elementSize, long chunkSize, Allocator allocator)
         {
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
-            if (elementSize <= 0)
-            {
-                throw new ArgumentException("elementSize must bigger then 0.");
-            }
-            if (chunkSize <= 0)
-            {
-                throw new ArgumentException("chunkSize must bigger then 0.");
-            }
-            if (elementSize > chunkSize)
-            {
-                throw new ArgumentException("chunkSize must bigger then elementSize.");
-            }
-#endif
-            m_Head = (Head*)Memory.Malloc<Head>(1, allocator);
-            *m_Head = new Head()
-            {
-                existsMark = ExistsMark,
-                allocator = allocator,
-                elementSize = elementSize,
-                elementCount = 0,
-                chunkSize = chunkSize,
-                fixedChunkSize = chunkSize - (chunkSize % elementSize),
-                maxElementCount = 0,
-                chunkCount = 0,
-                elementCountInChunk = (int)(chunkSize / elementSize),
-                maxChunkCount = ExpendCount,
-                chunks = (byte**)Memory.Malloc<byte>(Memory.PtrSize * ExpendCount, allocator),
-                lockedMark = 0
-            };
+            m_Head = default;
+            m_ExistenceMark = ExistenceMark.Null;
+            CheckArguments(elementSize, chunkSize, allocator);
+            InitializeHead(elementSize, chunkSize, allocator);
         }
 
-        public byte* this[int index] => Get(index);
+        public UnsafeNode this[int index] => Get(index);
 
-        public byte* Add()
+        public UnsafeNode Add()
         {
             CheckExists();
-            return InternalAdd();
+            InternalExtend(1);
+            int index = m_Head->elementCount++;
+            byte* value = GetDataPtr(index);
+            return new UnsafeNode(index, value);
         }
 
-        public byte* Insert(int index)
+        public UnsafeNode Insert(int index)
         {
             CheckExists();
             CheckIndexInsert(index);
-            return InternalInsert(index);
+            InternalExtend(1);
+            for (int i = m_Head->elementCount; i > index; i--)
+            {
+                Memory.Copy(GetDataPtr(i), GetDataPtr(i - 1), m_Head->elementSize);
+            }
+            m_Head->elementCount++;
+            byte* value = GetDataPtr(index);
+            return new UnsafeNode(index, value);
         }
 
-        public byte* Get(int index)
+        public UnsafeNode Get(int index)
         {
             CheckExists();
             CheckIndex(index);
-            return GetDataPtr(index);
+            byte* value = GetDataPtr(index);
+            return new UnsafeNode(index, value);
         }
 
         public void Remove(int index)
         {
             CheckExists();
             CheckIndex(index);
-            InternalRemove(index);
+            int count = m_Head->elementCount - 1;
+            for (int i = index; i < count; i++)
+            {
+                Memory.Copy(GetDataPtr(i), GetDataPtr(i + 1), m_Head->elementSize);
+            }
+            m_Head->elementCount = count;
         }
 
         public void RemoveLast()
@@ -121,13 +119,19 @@ namespace E.Collections.Unsafe
         {
             CheckExists();
             CheckIndex(index);
-            InternalSwapLastAndRemove(index);
+            int lastIndex = m_Head->elementCount - 1;
+            if (index != lastIndex)
+            {
+                //move last to this
+                Memory.Copy(GetDataPtr(index), GetDataPtr(lastIndex), m_Head->elementSize);
+            }
+            m_Head->elementCount = lastIndex;
         }
 
         private struct ReadOnlyCompareCallback<Compare>
             where Compare : unmanaged, IPtrCompareCallback
         {
-            public static readonly Compare function;
+            public static readonly Compare function = default;
         }
 
         public bool BinarySearch<Compare>(byte* value, out int index)
@@ -177,7 +181,7 @@ namespace E.Collections.Unsafe
         public void Dispose()
         {
             CheckExists();
-            m_Head->existsMark = 0;
+            m_Head->existenceMark = ExistenceMark.Null;
             for (int i = 0; i < m_Head->chunkCount; i++)
             {
                 Memory.Free(*(m_Head->chunks + i), m_Head->allocator);
@@ -187,10 +191,10 @@ namespace E.Collections.Unsafe
             m_Head = null;
         }
 
-        public Lock GetLock()
+        public SpinLock GetLock()
         {
             CheckExists();
-            return new Lock(&m_Head->lockedMark);
+            return new SpinLock(&m_Head->lockedMark);
         }
 
         public override bool Equals(object obj) => obj is UnsafeChunkedList list && m_Head == list.m_Head;
@@ -205,44 +209,71 @@ namespace E.Collections.Unsafe
 
         #endregion
 
+        #region IEnumerator
+
+        public IEnumerator<UnsafeNode> GetEnumerator() => new Enumerator(this);
+
+        IEnumerator IEnumerable.GetEnumerator() => new Enumerator(this);
+
+        public struct Enumerator : IEnumerator<UnsafeNode>, IEnumerator, IDisposable
+        {
+            private readonly UnsafeChunkedList m_Instance;
+
+            private int index;
+
+            public Enumerator(UnsafeChunkedList instance)
+            {
+                m_Instance = instance;
+                index = -1;
+            }
+
+            object IEnumerator.Current => Current;
+
+            public UnsafeNode Current => m_Instance[index];
+
+            public bool MoveNext()
+            {
+                if (index + 1 < m_Instance.Count)
+                {
+                    ++index;
+                    return true;
+                }
+                return false;
+            }
+
+            public void Reset()
+            {
+                index = -1;
+            }
+
+            public void Dispose()
+            {
+
+            }
+        }
+
+        #endregion
+
         #region Internal
 
-        private byte* InternalAdd()
+        private void InitializeHead(int elementSize, long chunkSize, Allocator allocator)
         {
-            InternalExtend(1);
-            return GetDataPtr(m_Head->elementCount++);
-        }
-
-        private byte* InternalInsert(int index)
-        {
-            InternalExtend(1);
-            for (int i = m_Head->elementCount; i > index; i--)
+            m_Head = (Head*)Memory.Malloc<Head>(1, allocator);
+            *m_Head = new Head()
             {
-                Memory.Copy(GetDataPtr(i), GetDataPtr(i - 1), m_Head->elementSize);
-            }
-            m_Head->elementCount++;
-            return GetDataPtr(index);
-        }
-
-        private void InternalRemove(int index)
-        {
-            int count = m_Head->elementCount - 1;
-            for (int i = index; i < count; i++)
-            {
-                Memory.Copy(GetDataPtr(i), GetDataPtr(i + 1), m_Head->elementSize);
-            }
-            m_Head->elementCount = count;
-        }
-
-        private void InternalSwapLastAndRemove(int index)
-        {
-            int lastIndex = m_Head->elementCount - 1;
-            if (index != lastIndex)
-            {
-                //move last to this
-                Memory.Copy(GetDataPtr(index), GetDataPtr(lastIndex), m_Head->elementSize);
-            }
-            m_Head->elementCount = lastIndex;
+                existenceMark = m_ExistenceMark = ExistenceMark.Create(),
+                allocator = allocator,
+                elementSize = elementSize,
+                elementCount = 0,
+                chunkSize = chunkSize,
+                fixedChunkSize = chunkSize - (chunkSize % elementSize),
+                maxElementCount = 0,
+                chunkCount = 0,
+                elementCountInChunk = (int)(chunkSize / elementSize),
+                maxChunkCount = ExpendCount,
+                chunks = (byte**)Memory.Malloc<byte>(Memory.PtrSize * ExpendCount, allocator),
+                lockedMark = 0
+            };
         }
 
         internal void InternalExtend(int count)
@@ -290,10 +321,29 @@ namespace E.Collections.Unsafe
         #region Check
 
         [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
+        private void CheckArguments(int elementSize, long chunkSize, Allocator allocator)
+        {
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            if (elementSize <= 0)
+            {
+                throw new ArgumentException("elementSize must bigger then 0.");
+            }
+            if (chunkSize <= 0)
+            {
+                throw new ArgumentException("chunkSize must bigger then 0.");
+            }
+            if (elementSize > chunkSize)
+            {
+                throw new ArgumentException("chunkSize must bigger then elementSize.");
+            }
+#endif
+        }
+
+        [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
         private void CheckExists()
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            if (m_Head == null || m_Head->existsMark != ExistsMark)
+            if (m_Head == null || m_Head->existenceMark != m_ExistenceMark)
             {
                 throw new NullReferenceException($"{nameof(UnsafeChunkedList)} is yet created or already disposed.");
             }
