@@ -7,14 +7,24 @@ namespace E.Collections.Unsafe
     {
         public static readonly ExistenceMark Null = default;
 
-        private static int m_Latest = 1;
+        private static readonly int m_LatestMark = 1;
+
+        private static readonly int* m_LatestMarkPtr;
 
         private readonly int m_Mark;
+
+        static ExistenceMark()
+        {
+            fixed(int* ptr = &m_LatestMark)
+            {
+                m_LatestMarkPtr = ptr;
+            }
+        }
 
         private ExistenceMark(int mark) => m_Mark = mark;
 
         public static ExistenceMark Create()
-            => new ExistenceMark(Interlocked.Increment(ref m_Latest));
+            => new ExistenceMark(Interlocked.Increment(ref *m_LatestMarkPtr));
 
         public override bool Equals(object obj)
             => obj is ExistenceMark mark && m_Mark == mark.m_Mark;
