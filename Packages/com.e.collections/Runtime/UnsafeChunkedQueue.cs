@@ -128,6 +128,21 @@ namespace E.Collections.Unsafe
         }
 
         /// <summary>
+        /// Reset element size while element count is zero.
+        /// </summary>
+        /// <param name="size"></param>
+        public void ResetElementSize(int size)
+        {
+            CheckExists();
+            CheckResetElementSize(size);
+            m_Head->elementSize = size;
+            long chunkSize = m_Head->chunkSize;
+            int elementCountInChunk = m_Head->elementCountInChunk = (int)(chunkSize / size);
+            m_Head->maxElementCount = m_Head->chunkCount * elementCountInChunk;
+            m_Head->fixedChunkSize = chunkSize - (chunkSize % size);
+        }
+
+        /// <summary>
         /// Dispose
         /// </summary>
         public void Dispose()
@@ -349,6 +364,21 @@ namespace E.Collections.Unsafe
             if (index < 0 || index >= m_Head->elementCount)
             {
                 throw new IndexOutOfRangeException($"{nameof(UnsafeChunkedQueue)} index must >= 0 && < Count.");
+            }
+#endif
+        }
+
+        [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
+        private void CheckResetElementSize(int size)
+        {
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            if (m_Head->elementCount > 0)
+            {
+                throw new Exception("Can not reset element size while element count is not zero.");
+            }
+            if (size <= 0)
+            {
+                throw new ArgumentException("must bigger then 0.", "size");
             }
 #endif
         }
