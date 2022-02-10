@@ -153,6 +153,17 @@ namespace E.Collections.Unsafe
             m_Head->data.Clear();
         }
 
+        /// <summary>
+        /// Reset element size while element count is zero.
+        /// </summary>
+        /// <param name="size"></param>
+        public void ResetElementSize(int size)
+        {
+            CheckExists();
+            CheckResetElementSize(size);
+            m_Head->data.ResetElementSize(m_Head->nodeStructSize + size);
+        }
+
         public void Dispose()
         {
             CheckExists();
@@ -319,6 +330,21 @@ namespace E.Collections.Unsafe
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             var tree = GetTree(key);
             m_Head->functions.Check(tree);
+#endif
+        }
+
+        [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
+        private void CheckResetElementSize(int size)
+        {
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            if (m_Head->data.Count > 0)
+            {
+                throw new Exception("Can not reset element size while element count is not zero.");
+            }
+            if (size <= 0)
+            {
+                throw new ArgumentException("must bigger then 0.", "size");
+            }
 #endif
         }
 

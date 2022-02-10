@@ -142,8 +142,8 @@ MonoBehaviour:
     y: 0
     width: 389
     height: 947
-  m_MinSize: {x: 275, y: 50}
-  m_MaxSize: {x: 4000, y: 4000}
+  m_MinSize: {x: 276, y: 71}
+  m_MaxSize: {x: 4001, y: 4021}
   m_ActualView: {fileID: 18}
   m_Panes:
   - {fileID: 18}
@@ -447,7 +447,7 @@ MonoBehaviour:
       name: collections
       fullName: collections
       resultStatus: 1
-      duration: 0.0639537
+      duration: 3.4887822
       messages: 
       output: 
       stacktrace: 
@@ -463,7 +463,7 @@ MonoBehaviour:
       name: E.Collections.Tests.dll
       fullName: D:/Users/Administrator/Documents/Workspace/com.e.collections/Library/ScriptAssemblies/E.Collections.Tests.dll
       resultStatus: 1
-      duration: 0.0163282
+      duration: 3.410949
       messages: 
       output: 
       stacktrace: 
@@ -479,7 +479,7 @@ MonoBehaviour:
       name: E
       fullName: E
       resultStatus: 1
-      duration: 0.0146915
+      duration: 3.408797
       messages: 
       output: 
       stacktrace: 
@@ -495,7 +495,7 @@ MonoBehaviour:
       name: Collections
       fullName: E.Collections
       resultStatus: 1
-      duration: 0.0132721
+      duration: 3.4081216
       messages: 
       output: 
       stacktrace: 
@@ -511,7 +511,7 @@ MonoBehaviour:
       name: Test
       fullName: E.Collections.Test
       resultStatus: 1
-      duration: 0.0096757
+      duration: 3.40375
       messages: 
       output: 
       stacktrace: 
@@ -523,82 +523,11 @@ MonoBehaviour:
       parentId: 1019
       parentUniqueId: E.Collections.Tests.dll/E/[Collections][suite]
     - id: 1001
-      uniqueId: E.Collections.Tests.dll/E/Collections/Test/[E.Collections.Tests][E.Collections.Test.TestTrailingZerosCount][suite]
-      name: TestTrailingZerosCount
-      fullName: E.Collections.Test.TestTrailingZerosCount
-      resultStatus: 1
-      duration: 0.0051608
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 1
-      categories: []
-      parentId: 1024
-      parentUniqueId: E.Collections.Tests.dll/E/Collections/[E.Collections.Tests][E.Collections.Test][suite]
-    - id: 1004
-      uniqueId: E.Collections.Tests.dll/E/Collections/Test/TestTrailingZerosCount/[E.Collections.Tests][E.Collections.Test.TestTrailingZerosCount.Find64BitMagicNumber]
-      name: Find64BitMagicNumber
-      fullName: E.Collections.Test.TestTrailingZerosCount.Find64BitMagicNumber
-      resultStatus: 1
-      duration: 0.0202777
-      messages: 
-      output: "64bits MagicNumber: 151050438420815295 \n Zeros Counts: \r\n0 ,1 ,2
-        ,7 ,3 ,13 ,8 ,19 ,4 ,25 ,14 ,28 ,9 ,34 ,20 ,40 ,\r\n5 ,17 ,26 ,38 ,15 ,46
-        ,29 ,48 ,10 ,31 ,35 ,54 ,21 ,50 ,41 ,57 ,\r\n63 ,6 ,12 ,18 ,24 ,27 ,33 ,39
-        ,16 ,37 ,45 ,47 ,30 ,53 ,49 ,56 ,\r\n62 ,11 ,23 ,32 ,36 ,44 ,52 ,55 ,61 ,22
-        ,43 ,51 ,60 ,42 ,59 ,58 ,\r\n"
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 0
-      categories:
-      - Uncategorized
-      parentId: 1001
-      parentUniqueId: E.Collections.Tests.dll/E/Collections/Test/[E.Collections.Tests][E.Collections.Test.TestTrailingZerosCount][suite]
-    - id: 1002
-      uniqueId: E.Collections.Tests.dll/E/Collections/Test/TestTrailingZerosCount/[E.Collections.Tests][E.Collections.Test.TestTrailingZerosCount.TestTrailingZerosCount32]
-      name: TestTrailingZerosCount32
-      fullName: E.Collections.Test.TestTrailingZerosCount.TestTrailingZerosCount32
-      resultStatus: 1
-      duration: 0.0242344
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 0
-      categories:
-      - Uncategorized
-      parentId: 1001
-      parentUniqueId: E.Collections.Tests.dll/E/Collections/Test/[E.Collections.Tests][E.Collections.Test.TestTrailingZerosCount][suite]
-    - id: 1003
-      uniqueId: E.Collections.Tests.dll/E/Collections/Test/TestTrailingZerosCount/[E.Collections.Tests][E.Collections.Test.TestTrailingZerosCount.TestTrailingZerosCount64]
-      name: TestTrailingZerosCount64
-      fullName: E.Collections.Test.TestTrailingZerosCount.TestTrailingZerosCount64
-      resultStatus: 1
-      duration: 0.0001639
-      messages: 
-      output: 
-      stacktrace: 
-      notRunnable: 0
-      ignoredOrSkipped: 0
-      description: 
-      isSuite: 0
-      categories:
-      - Uncategorized
-      parentId: 1001
-      parentUniqueId: E.Collections.Tests.dll/E/Collections/Test/[E.Collections.Tests][E.Collections.Test.TestTrailingZerosCount][suite]
-    - id: 1001
       uniqueId: E.Collections.Tests.dll/E/Collections/Test/[E.Collections.Tests][E.Collections.Test.TestUnsafeChunkedHashSet][suite]
       name: TestUnsafeChunkedHashSet
       fullName: E.Collections.Test.TestUnsafeChunkedHashSet
       resultStatus: 1
-      duration: 0.7813224
+      duration: 0.4694835
       messages: 
       output: 
       stacktrace: 
@@ -614,7 +543,7 @@ MonoBehaviour:
       name: TestUnsafeChunkedHashSetJob
       fullName: E.Collections.Test.TestUnsafeChunkedHashSet.TestUnsafeChunkedHashSetJob
       resultStatus: 1
-      duration: 0.1643409
+      duration: 0.1735264
       messages: 
       output: 
       stacktrace: 
@@ -631,7 +560,7 @@ MonoBehaviour:
       name: TestUnsafeChunkedHashSetRemove
       fullName: E.Collections.Test.TestUnsafeChunkedHashSet.TestUnsafeChunkedHashSetRemove
       resultStatus: 1
-      duration: 0.3464578
+      duration: 0.1634994
       messages: 
       output: 
       stacktrace: 
@@ -648,7 +577,7 @@ MonoBehaviour:
       name: TestUnsafeChunkedHashSetSet
       fullName: E.Collections.Test.TestUnsafeChunkedHashSet.TestUnsafeChunkedHashSetSet
       resultStatus: 1
-      duration: 0.2573537
+      duration: 0.1048177
       messages: 
       output: 
       stacktrace: 
@@ -665,7 +594,7 @@ MonoBehaviour:
       name: TestUnsafeChunkedList
       fullName: E.Collections.Test.TestUnsafeChunkedList
       resultStatus: 1
-      duration: 0.0528165
+      duration: 0.0199779
       messages: 
       output: 
       stacktrace: 
@@ -681,7 +610,7 @@ MonoBehaviour:
       name: TestUnsafeChunkedListAdd
       fullName: E.Collections.Test.TestUnsafeChunkedList.TestUnsafeChunkedListAdd
       resultStatus: 1
-      duration: 0.0040352
+      duration: 0.0041337
       messages: 
       output: 
       stacktrace: 
@@ -698,7 +627,7 @@ MonoBehaviour:
       name: TestUnsafeChunkedListInsert
       fullName: E.Collections.Test.TestUnsafeChunkedList.TestUnsafeChunkedListInsert
       resultStatus: 1
-      duration: 0.0012158
+      duration: 0.002809
       messages: 
       output: 
       stacktrace: 
@@ -715,7 +644,7 @@ MonoBehaviour:
       name: TestUnsafeChunkedListRemove
       fullName: E.Collections.Test.TestUnsafeChunkedList.TestUnsafeChunkedListRemove
       resultStatus: 1
-      duration: 0.0013407
+      duration: 0.0011093
       messages: 
       output: 
       stacktrace: 
@@ -732,7 +661,7 @@ MonoBehaviour:
       name: TestUnsafeChunkedListRemove1
       fullName: E.Collections.Test.TestUnsafeChunkedList.TestUnsafeChunkedListRemove1
       resultStatus: 1
-      duration: 0.00088
+      duration: 0.0005525
       messages: 
       output: 
       stacktrace: 
@@ -749,7 +678,7 @@ MonoBehaviour:
       name: TestUnsafeChunkedQueue
       fullName: E.Collections.Test.TestUnsafeChunkedQueue
       resultStatus: 1
-      duration: 0.0310392
+      duration: 0.0174861
       messages: 
       output: 
       stacktrace: 
@@ -765,7 +694,7 @@ MonoBehaviour:
       name: TestUnsafeChunkedQueueDequeue
       fullName: E.Collections.Test.TestUnsafeChunkedQueue.TestUnsafeChunkedQueueDequeue
       resultStatus: 1
-      duration: 0.0042479
+      duration: 0.0032437
       messages: 
       output: 
       stacktrace: 
@@ -782,7 +711,7 @@ MonoBehaviour:
       name: TestUnsafeChunkedQueueEnqueuePeek
       fullName: E.Collections.Test.TestUnsafeChunkedQueue.TestUnsafeChunkedQueueEnqueuePeek
       resultStatus: 1
-      duration: 0.0015849
+      duration: 0.0009316
       messages: 
       output: 
       stacktrace: 
@@ -799,7 +728,7 @@ MonoBehaviour:
       name: TestUnsafeChunkedSet
       fullName: E.Collections.Test.TestUnsafeChunkedSet
       resultStatus: 1
-      duration: 2.8678808
+      duration: 2.890123
       messages: 
       output: 
       stacktrace: 
@@ -815,7 +744,7 @@ MonoBehaviour:
       name: TestUnsafeChunkedSetJob
       fullName: E.Collections.Test.TestUnsafeChunkedSet.TestUnsafeChunkedSetJob
       resultStatus: 1
-      duration: 0.0913362
+      duration: 0.1079937
       messages: 
       output: 
       stacktrace: 
@@ -832,7 +761,7 @@ MonoBehaviour:
       name: TestUnsafeChunkedSetRemove
       fullName: E.Collections.Test.TestUnsafeChunkedSet.TestUnsafeChunkedSetRemove
       resultStatus: 1
-      duration: 1.1791152
+      duration: 1.5005771
       messages: 
       output: 
       stacktrace: 
@@ -849,7 +778,7 @@ MonoBehaviour:
       name: TestUnsafeChunkedSetSet
       fullName: E.Collections.Test.TestUnsafeChunkedSet.TestUnsafeChunkedSetSet
       resultStatus: 1
-      duration: 1.5846454
+      duration: 1.2732574
       messages: 
       output: 
       stacktrace: 
@@ -861,12 +790,12 @@ MonoBehaviour:
       - Uncategorized
       parentId: 1013
       parentUniqueId: E.Collections.Tests.dll/E/Collections/Test/[E.Collections.Tests][E.Collections.Test.TestUnsafeChunkedSet][suite]
-    m_ResultText: TestTrailingZerosCount64 (0.000s)
+    m_ResultText: Test (3.404s)
     m_ResultStacktrace: 
     m_TestListState:
       scrollPos: {x: 0, y: 0}
-      m_SelectedIDs: 197b5c7a
-      m_LastClickedID: 2052881177
+      m_SelectedIDs: cbe393cb
+      m_LastClickedID: -879500341
       m_ExpandedIDs: 3cd4538e1b59558ee8b47fa0c56383bdcc72d1becbe393cb389a4bd149ac2af8f3f9b04d2b2362542a49ca71ffffff7f
       m_RenameOverlay:
         m_UserAcceptedRename: 0
@@ -962,22 +891,22 @@ MonoBehaviour:
     m_SkipHidden: 0
     m_SearchArea: 1
     m_Folders:
-    - Packages/com.e.collections/Runtime
+    - Packages/com.e.collections
     m_Globs: []
     m_OriginalText: 
   m_ViewMode: 1
   m_StartGridSize: 64
   m_LastFolders:
-  - Packages/com.e.collections/Runtime
+  - Packages/com.e.collections
   m_LastFoldersGridSize: -1
   m_LastProjectPath: D:\Users\Administrator\Documents\Workspace\com.e.collections
   m_LockTracker:
     m_IsLocked: 0
   m_FolderTreeState:
     scrollPos: {x: 0, y: 0}
-    m_SelectedIDs: e44a0000
-    m_LastClickedID: 19172
-    m_ExpandedIDs: 00000000d44a0000d64a000000ca9a3bffffff7f
+    m_SelectedIDs: dc4a0000
+    m_LastClickedID: 19164
+    m_ExpandedIDs: 00000000da4a0000dc4a000000ca9a3bffffff7f
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -1005,7 +934,7 @@ MonoBehaviour:
     scrollPos: {x: 0, y: 0}
     m_SelectedIDs: 
     m_LastClickedID: 0
-    m_ExpandedIDs: 00000000d44a0000d64a0000
+    m_ExpandedIDs: 00000000da4a0000dc4a0000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -1133,9 +1062,9 @@ MonoBehaviour:
   m_SceneHierarchy:
     m_TreeViewState:
       scrollPos: {x: 0, y: 0}
-      m_SelectedIDs: ae4d0000
+      m_SelectedIDs: 
       m_LastClickedID: 0
-      m_ExpandedIDs: 0ca3ffff7ea3fffff0a3ffff62a4ffff8cabffff9eacffff0cadffff7aadffffe8adffff3aafffff30b2ffff92b3ffff4cb6ffffbab8ffff04baffffc2baffff64bcffffeac0ffffbec7ffff26efffffccf2ffff0cf4ffff4cf5ffffacf7fffff0f8ffff60f9ffff3afbffff
+      m_ExpandedIDs: 4afaffff32fbffff
       m_RenameOverlay:
         m_UserAcceptedRename: 0
         m_Name: 
@@ -1515,8 +1444,8 @@ MonoBehaviour:
     vZoomLockedByDefault: 0
     m_HBaseRangeMin: -575
     m_HBaseRangeMax: 575
-    m_VBaseRangeMin: -265.5
-    m_VBaseRangeMax: 265.5
+    m_VBaseRangeMin: -276
+    m_VBaseRangeMax: 276
     m_HAllowExceedBaseRangeMin: 1
     m_HAllowExceedBaseRangeMax: 1
     m_VAllowExceedBaseRangeMin: 1
@@ -1533,11 +1462,11 @@ MonoBehaviour:
     m_DrawArea:
       serializedVersion: 2
       x: 0
-      y: 21
+      y: 0
       width: 1150
-      height: 531
+      height: 552
     m_Scale: {x: 1, y: 1}
-    m_Translation: {x: 575, y: 265.5}
+    m_Translation: {x: 575, y: 276}
     m_MarginLeft: 0
     m_MarginRight: 0
     m_MarginTop: 0
@@ -1545,9 +1474,9 @@ MonoBehaviour:
     m_LastShownAreaInsideMargins:
       serializedVersion: 2
       x: -575
-      y: -265.5
+      y: -276
       width: 1150
-      height: 531
+      height: 552
     m_MinimalGUI: 1
   m_defaultScale: 1
   m_LastWindowPixelSize: {x: 1150, y: 552}
