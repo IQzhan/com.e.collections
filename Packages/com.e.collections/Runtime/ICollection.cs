@@ -12,6 +12,7 @@ namespace E.Collections
     }
 
     public interface ICollection<T> :
+        ICollection,
         IEnumerable<T>
         where T : unmanaged
     { }
