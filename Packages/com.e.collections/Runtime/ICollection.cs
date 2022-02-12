@@ -12,13 +12,14 @@ namespace E.Collections
     }
 
     public interface ICollection<T> :
+        ICollection,
         IEnumerable<T>
         where T : unmanaged
     { }
 
     public interface IResizeable
     {
-        public void Extend(int count);
+        public void Expand(int count);
     }
 
     public interface IChunked

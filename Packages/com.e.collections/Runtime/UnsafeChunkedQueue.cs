@@ -111,7 +111,7 @@ namespace E.Collections.Unsafe
         /// Extend.
         /// </summary>
         /// <param name="count"></param>
-        public void Extend(int count)
+        public void Expand(int count)
         {
             CheckExists();
             InternalExtend(count);
