@@ -40,7 +40,7 @@ namespace E.Collections
         /// </summary>
         /// <param name="v"></param>
         /// <returns></returns>
-        public static long GetTrailingZerosCount(long v)
+        public static int GetTrailingZerosCount(long v)
             => TrailingZerosCount64[((ulong)((v & -v) * Indexes64)) >> 58];
 
         public static int GetLowestOne(int v)
