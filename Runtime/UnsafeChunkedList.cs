@@ -63,7 +63,7 @@ namespace E.Collections.Unsafe
         public UnsafeNode Add()
         {
             CheckExists();
-            InternalExtend(1);
+            InternalExpand(1);
             int index = m_Head->elementCount++;
             byte* value = GetDataPtr(index);
             return new UnsafeNode(index, value);
@@ -73,7 +73,7 @@ namespace E.Collections.Unsafe
         {
             CheckExists();
             CheckIndexInsert(index);
-            InternalExtend(1);
+            InternalExpand(1);
             for (int i = m_Head->elementCount; i > index; i--)
             {
                 Memory.Copy(GetDataPtr(i), GetDataPtr(i - 1), m_Head->elementSize);
@@ -166,10 +166,10 @@ namespace E.Collections.Unsafe
             return false;
         }
 
-        public void Extend(int count)
+        public void Expand(int count)
         {
             CheckExists();
-            InternalExtend(count);
+            InternalExpand(count);
         }
 
         public void Clear()
@@ -291,7 +291,7 @@ namespace E.Collections.Unsafe
             };
         }
 
-        internal void InternalExtend(int count)
+        internal void InternalExpand(int count)
         {
             int targetCount = m_Head->elementCount + count;
             if (targetCount <= m_Head->maxElementCount) return;

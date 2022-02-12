@@ -8,9 +8,20 @@ using Unity.Collections.LowLevel.Unsafe;
 namespace E.Collections.Unsafe
 {
     /// <summary>
-    /// Hash + Red-Black-Tree, faster then UnsafeChunkedSet
+    /// Hash + Red-Black-Tree
     /// </summary>
     /// <typeparam name="Key"></typeparam>
+    ///  ------------
+    /// |Hash|Values |
+    /// |0   |rb-tree|
+    /// |1   |rb-tree|
+    /// |2   |rb-tree|
+    /// |3   |rb-tree|
+    /// |4   |rb-tree|
+    /// |5   |rb-tree|
+    /// |... |...    |
+    /// |n   |rb-tree|
+    ///  ------------
     public unsafe struct UnsafeChunkedHashSet<Key> :
         ICollection<UnsafeSetNode<Key>>,
         IChunked,
@@ -140,10 +151,10 @@ namespace E.Collections.Unsafe
             return m_Head->functions.Remove(tree, key);
         }
 
-        public void Extend(int count)
+        public void Expand(int count)
         {
             CheckExists();
-            m_Head->data.Extend(count);
+            m_Head->data.Expand(count);
         }
 
         public void Clear()

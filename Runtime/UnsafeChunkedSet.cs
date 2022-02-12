@@ -132,10 +132,10 @@ namespace E.Collections.Unsafe
             return m_Head->functions.Remove(&m_Head->tree, key);
         }
 
-        public void Extend(int count)
+        public void Expand(int count)
         {
             CheckExists();
-            m_Head->data.Extend(count);
+            m_Head->data.Expand(count);
         }
 
         public void Clear()

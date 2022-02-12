@@ -19,7 +19,7 @@ namespace E.Collections
 
     public interface IResizeable
     {
-        public void Extend(int count);
+        public void Expand(int count);
     }
 
     public interface IChunked
