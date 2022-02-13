@@ -1,7 +1,7 @@
 {
   "name": "com.e.collections",
   "displayName": "Collections",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "unity": "2019.3",
   "license": "MIT",
   "keywords": [
@@ -9,7 +9,8 @@
     "list",
     "queue",
     "set",
-    "tree"
+    "tree",
+    "bit"
   ],
   "author": {
     "name": "ZhanQI"

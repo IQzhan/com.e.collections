@@ -8,6 +8,30 @@ MonoBehaviour:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}
   m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 12004, guid: 0000000000000000e000000000000000, type: 0}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_PixelRect:
+    serializedVersion: 2
+    x: 775
+    y: 107
+    width: 513
+    height: 567
+  m_ShowMode: 0
+  m_Title: Test Runner
+  m_RootView: {fileID: 4}
+  m_MinSize: {x: 100, y: 121}
+  m_MaxSize: {x: 4000, y: 4021}
+  m_Maximized: 0
+--- !u!114 &2
+MonoBehaviour:
+  m_ObjectHideFlags: 52
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
   m_EditorHideFlags: 1
   m_Script: {fileID: 12004, guid: 0000000000000000e000000000000000, type: 0}
   m_Name: 
@@ -20,11 +44,61 @@ MonoBehaviour:
     height: 997
   m_ShowMode: 4
   m_Title: Project
-  m_RootView: {fileID: 6}
+  m_RootView: {fileID: 9}
   m_MinSize: {x: 875, y: 300}
   m_MaxSize: {x: 10000, y: 10000}
   m_Maximized: 1
---- !u!114 &2
+--- !u!114 &3
+MonoBehaviour:
+  m_ObjectHideFlags: 52
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 12006, guid: 0000000000000000e000000000000000, type: 0}
+  m_Name: TestRunnerWindow
+  m_EditorClassIdentifier: 
+  m_Children: []
+  m_Position:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 513
+    height: 567
+  m_MinSize: {x: 100, y: 121}
+  m_MaxSize: {x: 4000, y: 4021}
+  m_ActualView: {fileID: 15}
+  m_Panes:
+  - {fileID: 15}
+  m_Selected: 0
+  m_LastSelected: 0
+--- !u!114 &4
+MonoBehaviour:
+  m_ObjectHideFlags: 52
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 12010, guid: 0000000000000000e000000000000000, type: 0}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Children:
+  - {fileID: 3}
+  m_Position:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 513
+    height: 567
+  m_MinSize: {x: 100, y: 121}
+  m_MaxSize: {x: 4000, y: 4021}
+  vertical: 0
+  controlID: 438
+--- !u!114 &5
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -37,8 +111,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Children:
-  - {fileID: 9}
-  - {fileID: 3}
+  - {fileID: 12}
+  - {fileID: 6}
   m_Position:
     serializedVersion: 2
     x: 0
@@ -48,8 +122,8 @@ MonoBehaviour:
   m_MinSize: {x: 300, y: 200}
   m_MaxSize: {x: 24288, y: 16192}
   vertical: 0
-  controlID: 81
---- !u!114 &3
+  controlID: 104
+--- !u!114 &6
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -68,14 +142,14 @@ MonoBehaviour:
     y: 0
     width: 389
     height: 947
-  m_MinSize: {x: 276, y: 71}
-  m_MaxSize: {x: 4001, y: 4021}
-  m_ActualView: {fileID: 14}
+  m_MinSize: {x: 275, y: 50}
+  m_MaxSize: {x: 4000, y: 4000}
+  m_ActualView: {fileID: 18}
   m_Panes:
-  - {fileID: 14}
+  - {fileID: 18}
   m_Selected: 0
   m_LastSelected: 0
---- !u!114 &4
+--- !u!114 &7
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -96,12 +170,12 @@ MonoBehaviour:
     height: 573
   m_MinSize: {x: 200, y: 200}
   m_MaxSize: {x: 4000, y: 4000}
-  m_ActualView: {fileID: 15}
+  m_ActualView: {fileID: 19}
   m_Panes:
-  - {fileID: 15}
+  - {fileID: 19}
   m_Selected: 0
   m_LastSelected: 0
---- !u!114 &5
+--- !u!114 &8
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -122,13 +196,13 @@ MonoBehaviour:
     height: 374
   m_MinSize: {x: 231, y: 271}
   m_MaxSize: {x: 10001, y: 10021}
-  m_ActualView: {fileID: 13}
+  m_ActualView: {fileID: 17}
   m_Panes:
-  - {fileID: 13}
-  - {fileID: 18}
+  - {fileID: 17}
+  - {fileID: 22}
   m_Selected: 0
   m_LastSelected: 1
---- !u!114 &6
+--- !u!114 &9
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -141,9 +215,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Children:
-  - {fileID: 7}
-  - {fileID: 2}
-  - {fileID: 8}
+  - {fileID: 10}
+  - {fileID: 5}
+  - {fileID: 11}
   m_Position:
     serializedVersion: 2
     x: 0
@@ -156,7 +230,7 @@ MonoBehaviour:
   m_TopViewHeight: 30
   m_UseBottomView: 1
   m_BottomViewHeight: 20
---- !u!114 &7
+--- !u!114 &10
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -178,7 +252,7 @@ MonoBehaviour:
   m_MinSize: {x: 0, y: 0}
   m_MaxSize: {x: 0, y: 0}
   m_LastLoadedLayoutName: 
---- !u!114 &8
+--- !u!114 &11
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -199,7 +273,7 @@ MonoBehaviour:
     height: 20
   m_MinSize: {x: 0, y: 0}
   m_MaxSize: {x: 0, y: 0}
---- !u!114 &9
+--- !u!114 &12
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -212,8 +286,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Children:
-  - {fileID: 10}
-  - {fileID: 5}
+  - {fileID: 13}
+  - {fileID: 8}
   m_Position:
     serializedVersion: 2
     x: 0
@@ -223,8 +297,8 @@ MonoBehaviour:
   m_MinSize: {x: 200, y: 200}
   m_MaxSize: {x: 16192, y: 16192}
   vertical: 1
-  controlID: 19
---- !u!114 &10
+  controlID: 38
+--- !u!114 &13
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -237,8 +311,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Children:
-  - {fileID: 4}
-  - {fileID: 11}
+  - {fileID: 7}
+  - {fileID: 14}
   m_Position:
     serializedVersion: 2
     x: 0
@@ -248,8 +322,8 @@ MonoBehaviour:
   m_MinSize: {x: 200, y: 100}
   m_MaxSize: {x: 16192, y: 8096}
   vertical: 0
-  controlID: 20
---- !u!114 &11
+  controlID: 39
+--- !u!114 &14
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -270,14 +344,608 @@ MonoBehaviour:
     height: 573
   m_MinSize: {x: 200, y: 200}
   m_MaxSize: {x: 4000, y: 4000}
-  m_ActualView: {fileID: 16}
+  m_ActualView: {fileID: 20}
   m_Panes:
+  - {fileID: 20}
+  - {fileID: 21}
   - {fileID: 16}
-  - {fileID: 17}
-  - {fileID: 12}
   m_Selected: 0
   m_LastSelected: 1
---- !u!114 &12
+--- !u!114 &15
+MonoBehaviour:
+  m_ObjectHideFlags: 52
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 13401, guid: 0000000000000000e000000000000000, type: 0}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_MinSize: {x: 100, y: 100}
+  m_MaxSize: {x: 4000, y: 4000}
+  m_TitleContent:
+    m_Text: Test Runner
+    m_Image: {fileID: 0}
+    m_Tooltip: 
+  m_Pos:
+    serializedVersion: 2
+    x: 775
+    y: 107
+    width: 513
+    height: 546
+  m_ViewDataDictionary: {fileID: 0}
+  m_OverlayCanvas:
+    m_LastAppliedPresetName: Default
+    m_SaveData: []
+  m_Spl:
+    ID: 468
+    splitterInitialOffset: 292
+    currentActiveSplitter: -1
+    realSizes:
+    - 224
+    - 252
+    relativeSizes:
+    - 0.47058824
+    - 0.5294118
+    minSizes:
+    - 32
+    - 32
+    maxSizes:
+    - 0
+    - 0
+    lastTotalSize: 476
+    splitSize: 6
+    xOffset: 0
+    m_Version: 1
+    oldRealSizes: 
+    oldMinSizes: 
+    oldMaxSizes: 
+    oldSplitSize: 0
+  m_TestTypeToolbarIndex: 1
+  m_PlayModeTestListGUI:
+    m_Window: {fileID: 0}
+    m_NewResultList: []
+    m_ResultText: 
+    m_ResultStacktrace: 
+    m_TestListState:
+      scrollPos: {x: 0, y: 0}
+      m_SelectedIDs: 
+      m_LastClickedID: 0
+      m_ExpandedIDs: 
+      m_RenameOverlay:
+        m_UserAcceptedRename: 0
+        m_Name: 
+        m_OriginalName: 
+        m_EditFieldRect:
+          serializedVersion: 2
+          x: 0
+          y: 0
+          width: 0
+          height: 0
+        m_UserData: 0
+        m_IsWaitingForDelay: 0
+        m_IsRenaming: 0
+        m_OriginalEventType: 11
+        m_IsRenamingFilename: 0
+        m_ClientGUIView: {fileID: 0}
+      m_SearchString: 
+    m_TestRunnerUIFilter:
+      PassedHidden: 0
+      FailedHidden: 0
+      NotRunHidden: 0
+      m_SearchString: 
+      selectedCategoryMask: 0
+      availableCategories: []
+    m_SelectedOption: 0
+  m_EditModeTestListGUI:
+    m_Window: {fileID: 15}
+    m_NewResultList:
+    - id: 1000
+      uniqueId: '[collections][suite]'
+      name: collections
+      fullName: collections
+      resultStatus: 1
+      duration: 5.0310183
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 
+      parentUniqueId: 
+    - id: 1024
+      uniqueId: '[E.Collections.Tests.dll][suite]'
+      name: E.Collections.Tests.dll
+      fullName: D:/Users/Administrator/Documents/Workspace/com.e.collections/Library/ScriptAssemblies/E.Collections.Tests.dll
+      resultStatus: 1
+      duration: 4.994625
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 1000
+      parentUniqueId: '[collections][suite]'
+    - id: 1025
+      uniqueId: E.Collections.Tests.dll/[E][suite]
+      name: E
+      fullName: E
+      resultStatus: 1
+      duration: 4.993202
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 1024
+      parentUniqueId: '[E.Collections.Tests.dll][suite]'
+    - id: 1026
+      uniqueId: E.Collections.Tests.dll/E/[Collections][suite]
+      name: Collections
+      fullName: E.Collections
+      resultStatus: 1
+      duration: 4.9883757
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 1025
+      parentUniqueId: E.Collections.Tests.dll/[E][suite]
+    - id: 1027
+      uniqueId: E.Collections.Tests.dll/E/Collections/[E.Collections.Tests][E.Collections.Test][suite]
+      name: Test
+      fullName: E.Collections.Test
+      resultStatus: 1
+      duration: 4.980726
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 1026
+      parentUniqueId: E.Collections.Tests.dll/E/[Collections][suite]
+    - id: 1001
+      uniqueId: E.Collections.Tests.dll/E/Collections/Test/[E.Collections.Tests][E.Collections.Test.TestBitUtility][suite]
+      name: TestBitUtility
+      fullName: E.Collections.Test.TestBitUtility
+      resultStatus: 1
+      duration: 0.011845
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 1027
+      parentUniqueId: E.Collections.Tests.dll/E/Collections/[E.Collections.Tests][E.Collections.Test][suite]
+    - id: 1004
+      uniqueId: E.Collections.Tests.dll/E/Collections/Test/TestBitUtility/[E.Collections.Tests][E.Collections.Test.TestBitUtility.Find32BitIndexesNumber]
+      name: Find32BitIndexesNumber
+      fullName: E.Collections.Test.TestBitUtility.Find32BitIndexesNumber
+      resultStatus: 1
+      duration: 0.0054526
+      messages: 
+      output: "32bits IndexesNumber: 73743071 \n Zeros Counts: \r\n0 ,1 ,2 ,6 ,3
+        ,11 ,7 ,16 ,4 ,14 ,12 ,21 ,8 ,23 ,17 ,26 ,\r\n31 ,5 ,10 ,15 ,13 ,20 ,22 ,25
+        ,30 ,9 ,19 ,24 ,29 ,18 ,28 ,27 ,\r\n"
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1001
+      parentUniqueId: E.Collections.Tests.dll/E/Collections/Test/[E.Collections.Tests][E.Collections.Test.TestBitUtility][suite]
+    - id: 1005
+      uniqueId: E.Collections.Tests.dll/E/Collections/Test/TestBitUtility/[E.Collections.Tests][E.Collections.Test.TestBitUtility.Find64BitIndexesNumber]
+      name: Find64BitIndexesNumber
+      fullName: E.Collections.Test.TestBitUtility.Find64BitIndexesNumber
+      resultStatus: 1
+      duration: 0.0017171
+      messages: 
+      output: "64bits IndexesNumber: 151050438420815295 \n Zeros Counts: \r\n0 ,1
+        ,2 ,7 ,3 ,13 ,8 ,19 ,4 ,25 ,14 ,28 ,9 ,34 ,20 ,40 ,\r\n5 ,17 ,26 ,38 ,15
+        ,46 ,29 ,48 ,10 ,31 ,35 ,54 ,21 ,50 ,41 ,57 ,\r\n63 ,6 ,12 ,18 ,24 ,27 ,33
+        ,39 ,16 ,37 ,45 ,47 ,30 ,53 ,49 ,56 ,\r\n62 ,11 ,23 ,32 ,36 ,44 ,52 ,55 ,61
+        ,22 ,43 ,51 ,60 ,42 ,59 ,58 ,\r\n"
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1001
+      parentUniqueId: E.Collections.Tests.dll/E/Collections/Test/[E.Collections.Tests][E.Collections.Test.TestBitUtility][suite]
+    - id: 1002
+      uniqueId: E.Collections.Tests.dll/E/Collections/Test/TestBitUtility/[E.Collections.Tests][E.Collections.Test.TestBitUtility.TestTrailingZerosCount32]
+      name: TestTrailingZerosCount32
+      fullName: E.Collections.Test.TestBitUtility.TestTrailingZerosCount32
+      resultStatus: 1
+      duration: 0.0009605
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1001
+      parentUniqueId: E.Collections.Tests.dll/E/Collections/Test/[E.Collections.Tests][E.Collections.Test.TestBitUtility][suite]
+    - id: 1003
+      uniqueId: E.Collections.Tests.dll/E/Collections/Test/TestBitUtility/[E.Collections.Tests][E.Collections.Test.TestBitUtility.TestTrailingZerosCount64]
+      name: TestTrailingZerosCount64
+      fullName: E.Collections.Test.TestBitUtility.TestTrailingZerosCount64
+      resultStatus: 1
+      duration: 0.0004696
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1001
+      parentUniqueId: E.Collections.Tests.dll/E/Collections/Test/[E.Collections.Tests][E.Collections.Test.TestBitUtility][suite]
+    - id: 1006
+      uniqueId: E.Collections.Tests.dll/E/Collections/Test/[E.Collections.Tests][E.Collections.Test.TestUnsafeBitSet][suite]
+      name: TestUnsafeBitSet
+      fullName: E.Collections.Test.TestUnsafeBitSet
+      resultStatus: 1
+      duration: 2.580572
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 1027
+      parentUniqueId: E.Collections.Tests.dll/E/Collections/[E.Collections.Tests][E.Collections.Test][suite]
+    - id: 1007
+      uniqueId: E.Collections.Tests.dll/E/Collections/Test/TestUnsafeBitSet/[E.Collections.Tests][E.Collections.Test.TestUnsafeBitSet.TestUnsafeBitSetFunctions]
+      name: TestUnsafeBitSetFunctions
+      fullName: E.Collections.Test.TestUnsafeBitSet.TestUnsafeBitSetFunctions
+      resultStatus: 1
+      duration: 2.5701077
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1006
+      parentUniqueId: E.Collections.Tests.dll/E/Collections/Test/[E.Collections.Tests][E.Collections.Test.TestUnsafeBitSet][suite]
+    - id: 1008
+      uniqueId: E.Collections.Tests.dll/E/Collections/Test/[E.Collections.Tests][E.Collections.Test.TestUnsafeChunkedHashSet][suite]
+      name: TestUnsafeChunkedHashSet
+      fullName: E.Collections.Test.TestUnsafeChunkedHashSet
+      resultStatus: 1
+      duration: 0.7374622
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 1027
+      parentUniqueId: E.Collections.Tests.dll/E/Collections/[E.Collections.Tests][E.Collections.Test][suite]
+    - id: 1011
+      uniqueId: E.Collections.Tests.dll/E/Collections/Test/TestUnsafeChunkedHashSet/[E.Collections.Tests][E.Collections.Test.TestUnsafeChunkedHashSet.TestUnsafeChunkedHashSetJob]
+      name: TestUnsafeChunkedHashSetJob
+      fullName: E.Collections.Test.TestUnsafeChunkedHashSet.TestUnsafeChunkedHashSetJob
+      resultStatus: 1
+      duration: 0.0905283
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1008
+      parentUniqueId: E.Collections.Tests.dll/E/Collections/Test/[E.Collections.Tests][E.Collections.Test.TestUnsafeChunkedHashSet][suite]
+    - id: 1010
+      uniqueId: E.Collections.Tests.dll/E/Collections/Test/TestUnsafeChunkedHashSet/[E.Collections.Tests][E.Collections.Test.TestUnsafeChunkedHashSet.TestUnsafeChunkedHashSetRemove]
+      name: TestUnsafeChunkedHashSetRemove
+      fullName: E.Collections.Test.TestUnsafeChunkedHashSet.TestUnsafeChunkedHashSetRemove
+      resultStatus: 1
+      duration: 0.5175606
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1008
+      parentUniqueId: E.Collections.Tests.dll/E/Collections/Test/[E.Collections.Tests][E.Collections.Test.TestUnsafeChunkedHashSet][suite]
+    - id: 1009
+      uniqueId: E.Collections.Tests.dll/E/Collections/Test/TestUnsafeChunkedHashSet/[E.Collections.Tests][E.Collections.Test.TestUnsafeChunkedHashSet.TestUnsafeChunkedHashSetSet]
+      name: TestUnsafeChunkedHashSetSet
+      fullName: E.Collections.Test.TestUnsafeChunkedHashSet.TestUnsafeChunkedHashSetSet
+      resultStatus: 1
+      duration: 0.1165318
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1008
+      parentUniqueId: E.Collections.Tests.dll/E/Collections/Test/[E.Collections.Tests][E.Collections.Test.TestUnsafeChunkedHashSet][suite]
+    - id: 1012
+      uniqueId: E.Collections.Tests.dll/E/Collections/Test/[E.Collections.Tests][E.Collections.Test.TestUnsafeChunkedList][suite]
+      name: TestUnsafeChunkedList
+      fullName: E.Collections.Test.TestUnsafeChunkedList
+      resultStatus: 1
+      duration: 0.0305304
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 1027
+      parentUniqueId: E.Collections.Tests.dll/E/Collections/[E.Collections.Tests][E.Collections.Test][suite]
+    - id: 1013
+      uniqueId: E.Collections.Tests.dll/E/Collections/Test/TestUnsafeChunkedList/[E.Collections.Tests][E.Collections.Test.TestUnsafeChunkedList.TestUnsafeChunkedListAdd]
+      name: TestUnsafeChunkedListAdd
+      fullName: E.Collections.Test.TestUnsafeChunkedList.TestUnsafeChunkedListAdd
+      resultStatus: 1
+      duration: 0.0063552
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1012
+      parentUniqueId: E.Collections.Tests.dll/E/Collections/Test/[E.Collections.Tests][E.Collections.Test.TestUnsafeChunkedList][suite]
+    - id: 1014
+      uniqueId: E.Collections.Tests.dll/E/Collections/Test/TestUnsafeChunkedList/[E.Collections.Tests][E.Collections.Test.TestUnsafeChunkedList.TestUnsafeChunkedListInsert]
+      name: TestUnsafeChunkedListInsert
+      fullName: E.Collections.Test.TestUnsafeChunkedList.TestUnsafeChunkedListInsert
+      resultStatus: 1
+      duration: 0.0017199
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1012
+      parentUniqueId: E.Collections.Tests.dll/E/Collections/Test/[E.Collections.Tests][E.Collections.Test.TestUnsafeChunkedList][suite]
+    - id: 1015
+      uniqueId: E.Collections.Tests.dll/E/Collections/Test/TestUnsafeChunkedList/[E.Collections.Tests][E.Collections.Test.TestUnsafeChunkedList.TestUnsafeChunkedListRemove]
+      name: TestUnsafeChunkedListRemove
+      fullName: E.Collections.Test.TestUnsafeChunkedList.TestUnsafeChunkedListRemove
+      resultStatus: 1
+      duration: 0.0011311
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1012
+      parentUniqueId: E.Collections.Tests.dll/E/Collections/Test/[E.Collections.Tests][E.Collections.Test.TestUnsafeChunkedList][suite]
+    - id: 1016
+      uniqueId: E.Collections.Tests.dll/E/Collections/Test/TestUnsafeChunkedList/[E.Collections.Tests][E.Collections.Test.TestUnsafeChunkedList.TestUnsafeChunkedListRemove1]
+      name: TestUnsafeChunkedListRemove1
+      fullName: E.Collections.Test.TestUnsafeChunkedList.TestUnsafeChunkedListRemove1
+      resultStatus: 1
+      duration: 0.0006271
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1012
+      parentUniqueId: E.Collections.Tests.dll/E/Collections/Test/[E.Collections.Tests][E.Collections.Test.TestUnsafeChunkedList][suite]
+    - id: 1017
+      uniqueId: E.Collections.Tests.dll/E/Collections/Test/[E.Collections.Tests][E.Collections.Test.TestUnsafeChunkedQueue][suite]
+      name: TestUnsafeChunkedQueue
+      fullName: E.Collections.Test.TestUnsafeChunkedQueue
+      resultStatus: 1
+      duration: 0.0499152
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 1027
+      parentUniqueId: E.Collections.Tests.dll/E/Collections/[E.Collections.Tests][E.Collections.Test][suite]
+    - id: 1019
+      uniqueId: E.Collections.Tests.dll/E/Collections/Test/TestUnsafeChunkedQueue/[E.Collections.Tests][E.Collections.Test.TestUnsafeChunkedQueue.TestUnsafeChunkedQueueDequeue]
+      name: TestUnsafeChunkedQueueDequeue
+      fullName: E.Collections.Test.TestUnsafeChunkedQueue.TestUnsafeChunkedQueueDequeue
+      resultStatus: 1
+      duration: 0.0032118
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1017
+      parentUniqueId: E.Collections.Tests.dll/E/Collections/Test/[E.Collections.Tests][E.Collections.Test.TestUnsafeChunkedQueue][suite]
+    - id: 1018
+      uniqueId: E.Collections.Tests.dll/E/Collections/Test/TestUnsafeChunkedQueue/[E.Collections.Tests][E.Collections.Test.TestUnsafeChunkedQueue.TestUnsafeChunkedQueueEnqueuePeek]
+      name: TestUnsafeChunkedQueueEnqueuePeek
+      fullName: E.Collections.Test.TestUnsafeChunkedQueue.TestUnsafeChunkedQueueEnqueuePeek
+      resultStatus: 1
+      duration: 0.0015837
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1017
+      parentUniqueId: E.Collections.Tests.dll/E/Collections/Test/[E.Collections.Tests][E.Collections.Test.TestUnsafeChunkedQueue][suite]
+    - id: 1020
+      uniqueId: E.Collections.Tests.dll/E/Collections/Test/[E.Collections.Tests][E.Collections.Test.TestUnsafeChunkedSet][suite]
+      name: TestUnsafeChunkedSet
+      fullName: E.Collections.Test.TestUnsafeChunkedSet
+      resultStatus: 1
+      duration: 1.5683539
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 1
+      categories: []
+      parentId: 1027
+      parentUniqueId: E.Collections.Tests.dll/E/Collections/[E.Collections.Tests][E.Collections.Test][suite]
+    - id: 1023
+      uniqueId: E.Collections.Tests.dll/E/Collections/Test/TestUnsafeChunkedSet/[E.Collections.Tests][E.Collections.Test.TestUnsafeChunkedSet.TestUnsafeChunkedSetJob]
+      name: TestUnsafeChunkedSetJob
+      fullName: E.Collections.Test.TestUnsafeChunkedSet.TestUnsafeChunkedSetJob
+      resultStatus: 1
+      duration: 0.1692663
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1020
+      parentUniqueId: E.Collections.Tests.dll/E/Collections/Test/[E.Collections.Tests][E.Collections.Test.TestUnsafeChunkedSet][suite]
+    - id: 1022
+      uniqueId: E.Collections.Tests.dll/E/Collections/Test/TestUnsafeChunkedSet/[E.Collections.Tests][E.Collections.Test.TestUnsafeChunkedSet.TestUnsafeChunkedSetRemove]
+      name: TestUnsafeChunkedSetRemove
+      fullName: E.Collections.Test.TestUnsafeChunkedSet.TestUnsafeChunkedSetRemove
+      resultStatus: 1
+      duration: 0.6337234
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1020
+      parentUniqueId: E.Collections.Tests.dll/E/Collections/Test/[E.Collections.Tests][E.Collections.Test.TestUnsafeChunkedSet][suite]
+    - id: 1021
+      uniqueId: E.Collections.Tests.dll/E/Collections/Test/TestUnsafeChunkedSet/[E.Collections.Tests][E.Collections.Test.TestUnsafeChunkedSet.TestUnsafeChunkedSetSet]
+      name: TestUnsafeChunkedSetSet
+      fullName: E.Collections.Test.TestUnsafeChunkedSet.TestUnsafeChunkedSetSet
+      resultStatus: 1
+      duration: 0.7517263
+      messages: 
+      output: 
+      stacktrace: 
+      notRunnable: 0
+      ignoredOrSkipped: 0
+      description: 
+      isSuite: 0
+      categories:
+      - Uncategorized
+      parentId: 1020
+      parentUniqueId: E.Collections.Tests.dll/E/Collections/Test/[E.Collections.Tests][E.Collections.Test.TestUnsafeChunkedSet][suite]
+    m_ResultText: collections (5.031s)
+    m_ResultStacktrace: 
+    m_TestListState:
+      scrollPos: {x: 0, y: 228}
+      m_SelectedIDs: 1b59558e
+      m_LastClickedID: -1907009253
+      m_ExpandedIDs: 3cd4538e1b59558ee8b47fa0e94057a7c56383bdcbe393cb49ac2af8edc51649f3f9b04d2b2362542a49ca71ffffff7f
+      m_RenameOverlay:
+        m_UserAcceptedRename: 0
+        m_Name: 
+        m_OriginalName: 
+        m_EditFieldRect:
+          serializedVersion: 2
+          x: 0
+          y: 0
+          width: 0
+          height: 0
+        m_UserData: 0
+        m_IsWaitingForDelay: 0
+        m_IsRenaming: 0
+        m_OriginalEventType: 11
+        m_IsRenamingFilename: 0
+        m_ClientGUIView: {fileID: 0}
+      m_SearchString: 
+    m_TestRunnerUIFilter:
+      PassedHidden: 0
+      FailedHidden: 0
+      NotRunHidden: 0
+      m_SearchString: 
+      selectedCategoryMask: 0
+      availableCategories:
+      - Uncategorized
+--- !u!114 &16
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -305,7 +973,7 @@ MonoBehaviour:
   m_OverlayCanvas:
     m_LastAppliedPresetName: Default
     m_SaveData: []
---- !u!114 &13
+--- !u!114 &17
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -359,9 +1027,9 @@ MonoBehaviour:
     m_IsLocked: 0
   m_FolderTreeState:
     scrollPos: {x: 0, y: 0}
-    m_SelectedIDs: e64a0000
-    m_LastClickedID: 19174
-    m_ExpandedIDs: 00000000d84a0000da4a000000ca9a3bffffff7f
+    m_SelectedIDs: 8c460000
+    m_LastClickedID: 18060
+    m_ExpandedIDs: 00000000844600008646000000ca9a3bffffff7f
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -389,7 +1057,7 @@ MonoBehaviour:
     scrollPos: {x: 0, y: 0}
     m_SelectedIDs: 
     m_LastClickedID: 0
-    m_ExpandedIDs: 00000000d84a0000da4a0000
+    m_ExpandedIDs: 000000008446000086460000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -433,7 +1101,7 @@ MonoBehaviour:
       m_IsRenaming: 0
       m_OriginalEventType: 11
       m_IsRenamingFilename: 1
-      m_ClientGUIView: {fileID: 5}
+      m_ClientGUIView: {fileID: 8}
     m_CreateAssetUtility:
       m_EndAction: {fileID: 0}
       m_InstanceID: 0
@@ -445,7 +1113,7 @@ MonoBehaviour:
     m_GridSize: 64
   m_SkipHiddenPackages: 0
   m_DirectoriesAreaWidth: 115
---- !u!114 &14
+--- !u!114 &18
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -486,7 +1154,7 @@ MonoBehaviour:
   m_LockTracker:
     m_IsLocked: 0
   m_PreviewWindow: {fileID: 0}
---- !u!114 &15
+--- !u!114 &19
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -517,9 +1185,9 @@ MonoBehaviour:
   m_SceneHierarchy:
     m_TreeViewState:
       scrollPos: {x: 0, y: 0}
-      m_SelectedIDs: 68080000
+      m_SelectedIDs: 8c460000
       m_LastClickedID: 0
-      m_ExpandedIDs: aadeffff7ee1ffffe6e2ffff86e3ffffb0e4ffff14e5ffff74e5ffff92e6fffff2e6ffff9aecfffffaecffff5aedffffe8eeffff82f1ffffaef2ffffa4f3ffffcaf4ffff36f5ffff96f5ffff36fbffff
+      m_ExpandedIDs: 62e8ffffc4e8ffff36e9ffff3ceaffff78ebffff68ecffff8aedffffaaeeffff36fbffff
       m_RenameOverlay:
         m_UserAcceptedRename: 0
         m_Name: 
@@ -543,7 +1211,7 @@ MonoBehaviour:
       m_IsLocked: 0
     m_CurrentSortingName: TransformSorting
   m_WindowGUID: bef00f473c053544e9d7a7922042c385
---- !u!114 &16
+--- !u!114 &20
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -848,7 +1516,7 @@ MonoBehaviour:
   m_SceneVisActive: 1
   m_LastLockedObject: {fileID: 0}
   m_ViewIsLockedToObject: 0
---- !u!114 &17
+--- !u!114 &21
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -940,7 +1608,7 @@ MonoBehaviour:
   m_LowResolutionForAspectRatios: 01000000000000000000
   m_XRRenderMode: 0
   m_RenderTexture: {fileID: 0}
---- !u!114 &18
+--- !u!114 &22
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
