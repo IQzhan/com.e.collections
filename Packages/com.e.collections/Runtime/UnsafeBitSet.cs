@@ -124,7 +124,6 @@ namespace E.Collections
         public void Expand(int count)
         {
             CheckExists();
-            CheckResizable();
             InternalExpand(count);
         }
 
@@ -286,11 +285,11 @@ namespace E.Collections
                 var rankData = rankDatas[i];
                 int moveCount = 6 * (rank - i);
                 // exp = rank - i;
-                // rankIndex = target / 64^exp
-                var rankIndex = target >> moveCount;
+                // indexInRank = target / 64^exp
+                var indexInRank = target >> moveCount;
                 // offset = (target % 64^exp) / (64^(exp-1)) 
                 var offset = (int)(target & (-1L >> (64 - moveCount))) >> (moveCount - 6);
-                var ptr = rankData.data + rankIndex;
+                var ptr = rankData.data + indexInRank;
                 var compare = 1L << offset;
                 bool ori = (*ptr & compare) != 0;
                 bool isDiff = lastValue ^ ori;
@@ -353,8 +352,42 @@ namespace E.Collections
             long newCapacity = GetRealCapacity(oriCapacity + count);
             if (newCapacity > oriCapacity)
             {
-                Memory.Free(m_Head->rankData, m_Head->allocator);
+                var oldRank = m_Head->rank;
+                var oldRankDatas = m_Head->rankData;
                 InitializePtr(newCapacity, m_Head->allocator);
+                var newRank = m_Head->rank;
+                var newRankDatas = m_Head->rankData;
+                var oldRankData = oldRankDatas[oldRank - 1];
+                var newRankData = newRankDatas[newRank - 1];
+                var oldLongCount = oldRankData.longCount;
+                // copy
+                Memory.Copy(newRankData.data, oldRankData.data, oldLongCount * 8);
+                Memory.Free(oldRankDatas, m_Head->allocator);
+                // reset
+                if (newRank > 1)
+                {
+                    var data = newRankData.data;
+                    for (int i = 0; i < oldLongCount; i++)
+                    {
+                        if (data[i] != 0)
+                        {
+                            //set
+                            long target = i;
+                            for (int rankIndex = newRank - 2; rankIndex >= 0; rankIndex--)
+                            {
+                                var rankData = newRankDatas[rankIndex];
+                                int moveCount = 6 * (newRank - rankIndex - 1);
+                                // exp = newRank - rankIndex - 1;
+                                // indexInRank = target / 64^exp
+                                var indexInRank = target >> moveCount;
+                                // offset = (target % 64^exp) / (64^(exp-1)) 
+                                var offset = (int)(target & (-1L >> (64 - moveCount))) >> (moveCount - 6);
+                                var ptr = rankData.data + indexInRank;
+                                *ptr |= (1L << offset);
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -413,18 +446,6 @@ namespace E.Collections
                 throw new IndexOutOfRangeException($"{nameof(UnsafeBitSet)} index must must >= 0 && < capacity.");
             }
 #endif
-        }
-
-        [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
-        private void CheckResizable()
-        {
-            if (m_Head->count > 0)
-            {
-                if (m_Head->count > 0)
-                {
-                    throw new Exception("Can not resize while count is not zero.");
-                }
-            }
         }
 
         #endregion

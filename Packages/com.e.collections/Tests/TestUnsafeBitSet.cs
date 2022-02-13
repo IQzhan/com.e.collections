@@ -50,6 +50,7 @@ namespace E.Collections.Test
                     }
                 }
 
+                //GetFirstOneIndex
                 long halfCount = count >> 1;
                 Assert.AreEqual(halfCount, bitSet.LongCount);
                 for (int i = 0; i < halfCount; i++)
@@ -58,6 +59,27 @@ namespace E.Collections.Test
                     Assert.AreEqual((long)(2 * i + 1), index);
                 }
                 Assert.IsFalse(bitSet.IsNotEmpty());
+                
+                //Expand
+                for (int i = 0; i < count; i++)
+                {
+                    bitSet.Set(i, (i & 1) == 1);
+                }
+                Assert.AreEqual(count, bitSet.Capacity);
+                bitSet.Expand(1 << 6);
+                Assert.AreEqual(count + (1 << 6), bitSet.Capacity);
+                for (int i = 0; i < count; i++)
+                {
+                    bool val = bitSet.Get(i);
+                    if ((i & 1) == 1)
+                    {
+                        Assert.IsTrue(val);
+                    }
+                    else
+                    {
+                        Assert.IsFalse(val);
+                    }
+                }
             }
         }
     }
