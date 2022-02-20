@@ -4,4 +4,4 @@
 2. UnsafeChunkedQueue
 3. UnsafeChunkedSet
 4. UnsafeChunkedHashSet
-5. UnsafeBitSet
+5. UnsafeBitMask

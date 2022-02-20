@@ -1,4 +1,5 @@
-﻿using NUnit.Framework;
+﻿using E.Collections.Unsafe;
+using NUnit.Framework;
 using Unity.Collections;
 
 namespace E.Collections.Test
@@ -6,40 +7,42 @@ namespace E.Collections.Test
     public class TestUnsafeBitSet
     {
         [Test]
-        public void TestUnsafeBitSetFunctions()
+        public void TestUnsafeBitMaskBasic()
         {
             int count = 1 << 18;
-            using (var bitSet = new UnsafeBitSet(count, Allocator.Temp))
+            using (var bitMask = new UnsafeBitMask(count, Allocator.Temp))
             {
-                Assert.IsFalse(bitSet.IsNotEmpty());
+                //full
+                Assert.IsFalse(bitMask.IsNotEmpty());
                 for (int i = 0; i < count; i++)
                 {
-                    Assert.IsFalse(bitSet.Get(i));
+                    Assert.IsFalse(bitMask.Get(i));
                 }
                 for (int i = 0; i < count; i++)
                 {
-                    bitSet.Set(i, true);
+                    bitMask.Set(i, true);
                 }
-                Assert.IsTrue(bitSet.IsNotEmpty());
+                Assert.IsTrue(bitMask.IsNotEmpty());
                 for (int i = 0; i < count; i++)
                 {
-                    Assert.IsTrue(bitSet.Get(i));
+                    Assert.IsTrue(bitMask.Get(i));
                 }
-                bitSet.Clear();
-                Assert.IsFalse(bitSet.IsNotEmpty());
+                bitMask.Clear();
+                Assert.IsFalse(bitMask.IsNotEmpty());
                 for (int i = 0; i < count; i++)
                 {
-                    Assert.IsFalse(bitSet.Get(i));
+                    Assert.IsFalse(bitMask.Get(i));
                 }
 
+                //not full
                 for (int i = 0; i < count; i++)
                 {
-                    bitSet.Set(i, (i & 1) == 1);
+                    bitMask.Set(i, (i & 1) == 1);
                 }
-                Assert.IsTrue(bitSet.IsNotEmpty());
+                Assert.IsTrue(bitMask.IsNotEmpty());
                 for (int i = 0; i < count; i++)
                 {
-                    bool val = bitSet.Get(i);
+                    bool val = bitMask.Get(i);
                     if ((i & 1) == 1)
                     {
                         Assert.IsTrue(val);
@@ -50,36 +53,77 @@ namespace E.Collections.Test
                     }
                 }
 
-                //GetFirstOneIndex
+                //Expand
+                Assert.AreEqual(count, bitMask.Capacity);
+                bitMask.Expand(1 << 6);
+                Assert.AreEqual(count + (1 << 6), bitMask.Capacity);
+                for (int i = 0; i < count; i++)
+                {
+                    bool val = bitMask.Get(i);
+                    if ((i & 1) == 1)
+                    {
+                        Assert.IsTrue(val);
+                    }
+                    else
+                    {
+                        Assert.IsFalse(val);
+                    }
+                }
+            }
+        }
+
+        [Test]
+        public void TestGetFirstOneIndex()
+        {
+            int count = 1 << 18;
+            using (var bitMask = new UnsafeBitMask(count, Allocator.Temp))
+            {
+                for (int i = 0; i < count; i++)
+                {
+                    bitMask.Set(i, (i & 1) == 1);
+                }
                 long halfCount = count >> 1;
-                Assert.AreEqual(halfCount, bitSet.LongCount);
+                Assert.AreEqual(halfCount, bitMask.LongCount);
                 for (int i = 0; i < halfCount; i++)
                 {
-                    long index = bitSet.GetFirstOneIndexThenSetZero();
+                    long index = bitMask.GetFirstThenRemove();
                     Assert.AreEqual((long)(2 * i + 1), index);
                 }
-                Assert.IsFalse(bitSet.IsNotEmpty());
-                
-                //Expand
+                Assert.IsFalse(bitMask.IsNotEmpty());
+            }
+        }
+
+        [Test]
+        public void TestGetFirstOneIndexAfter()
+        {
+            int count = 1 << 18;
+            using (var bitMask = new UnsafeBitMask(count, Allocator.Temp))
+            {
+                long startIndex = 0;
                 for (int i = 0; i < count; i++)
                 {
-                    bitSet.Set(i, (i & 1) == 1);
+                    bitMask.Set(i, (i & 1) == 1);
                 }
-                Assert.AreEqual(count, bitSet.Capacity);
-                bitSet.Expand(1 << 6);
-                Assert.AreEqual(count + (1 << 6), bitSet.Capacity);
-                for (int i = 0; i < count; i++)
+                int halfCount0 = 0;
+                while (startIndex != -1)
                 {
-                    bool val = bitSet.Get(i);
-                    if ((i & 1) == 1)
+                    startIndex = bitMask.GetFirstAfter(startIndex);
+                    Assert.IsTrue((startIndex & 1) == 1);
+                    if(startIndex != -1)
                     {
-                        Assert.IsTrue(val);
-                    }
-                    else
-                    {
-                        Assert.IsFalse(val);
+                        halfCount0++;
                     }
                 }
+                Assert.AreEqual(count / 2, halfCount0);
+
+                // foreach
+                int halfCount1 = 0;
+                foreach (var val in bitMask)
+                {
+                    Assert.IsTrue((val & 1) == 1);
+                    halfCount1++;
+                }
+                Assert.AreEqual(count / 2, halfCount1);
             }
         }
     }
