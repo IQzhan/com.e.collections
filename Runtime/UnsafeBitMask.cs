@@ -1,15 +1,14 @@
-﻿using E.Collections.Unsafe;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 
-namespace E.Collections
+namespace E.Collections.Unsafe
 {
     /// <summary>
-    /// Bit tree set.
+    /// Bit mask tree.
     /// </summary>
     /// 1 means children not empty.
     /// Such as in 4 bits
@@ -26,12 +25,12 @@ namespace E.Collections
     /// |...  |...                                       |
     /// |n    |long long long ... (Max count to 64 << n) |
     ///  ------------------------------------------------
-    public unsafe struct UnsafeBitSet :
-        ICollection<bool>,
+    public unsafe struct UnsafeBitMask :
+        ICollection<long>,
         IResizeable,
         ILockable,
         IDisposable,
-        IEquatable<UnsafeBitSet>
+        IEquatable<UnsafeBitMask>
     {
         #region Main
 
@@ -74,7 +73,7 @@ namespace E.Collections
 
         public long Capacity => IsCreated ? m_Head->capacity : 0;
 
-        public UnsafeBitSet(long expectedCapacity, Allocator allocator)
+        public UnsafeBitMask(long expectedCapacity, Allocator allocator)
         {
             m_ExistenceMark = default;
             m_Head = default;
@@ -104,16 +103,39 @@ namespace E.Collections
             return InternalGet(index);
         }
 
-        public long GetFirstOneIndex()
+        public long GetFirst()
         {
             CheckExists();
-            return InternalGetFirstOneIndex();
+            return InternalGetFirst();
         }
 
-        public long GetFirstOneIndexThenSetZero()
+        public long GetFirstAfter(long afterIndex)
         {
             CheckExists();
-            var searchedIndex = InternalGetFirstOneIndex();
+            CheckIndexAfter(afterIndex);
+            if (afterIndex < 0)
+            {
+                return InternalGetFirst();
+            }
+            return InternalGetFirstAfter(afterIndex);
+        }
+
+        public long GetFirstThenRemove()
+        {
+            CheckExists();
+            var searchedIndex = InternalGetFirst();
+            if (searchedIndex != -1)
+            {
+                InternalSet(searchedIndex, false);
+            }
+            return searchedIndex;
+        }
+
+        public long GetFirstThenRemoveAfter(long afterIndex)
+        {
+            CheckExists();
+            CheckIndexAfter(afterIndex);
+            long searchedIndex = (afterIndex < 0) ? InternalGetFirst() : InternalGetFirstAfter(afterIndex);
             if (searchedIndex != -1)
             {
                 InternalSet(searchedIndex, false);
@@ -145,31 +167,31 @@ namespace E.Collections
             return new SpinLock(ref m_Head->lockedMark);
         }
 
-        public override bool Equals(object obj) => obj is UnsafeBitSet list && m_Head == list.m_Head;
+        public override bool Equals(object obj) => obj is UnsafeBitMask list && m_Head == list.m_Head;
 
-        public bool Equals(UnsafeBitSet other) => m_Head == other.m_Head;
+        public bool Equals(UnsafeBitMask other) => m_Head == other.m_Head;
 
         public override int GetHashCode() => m_Head != null ? (int)m_Head : 0;
 
-        public static bool operator ==(UnsafeBitSet left, UnsafeBitSet right) => left.m_Head == right.m_Head;
+        public static bool operator ==(UnsafeBitMask left, UnsafeBitMask right) => left.m_Head == right.m_Head;
 
-        public static bool operator !=(UnsafeBitSet left, UnsafeBitSet right) => left.m_Head != right.m_Head;
+        public static bool operator !=(UnsafeBitMask left, UnsafeBitMask right) => left.m_Head != right.m_Head;
 
         #endregion
 
         #region IEnumerator
 
-        public IEnumerator<bool> GetEnumerator() => new Enumerator(this);
+        public IEnumerator<long> GetEnumerator() => new Enumerator(this);
 
         IEnumerator IEnumerable.GetEnumerator() => new Enumerator(this);
 
-        public struct Enumerator : IEnumerator<bool>, IEnumerator, IDisposable
+        public struct Enumerator : IEnumerator<long>, IEnumerator, IDisposable
         {
-            private readonly UnsafeBitSet m_Instance;
+            private readonly UnsafeBitMask m_Instance;
 
             private long index;
 
-            public Enumerator(UnsafeBitSet instance)
+            public Enumerator(UnsafeBitMask instance)
             {
                 m_Instance = instance;
                 index = -1;
@@ -177,14 +199,22 @@ namespace E.Collections
 
             object IEnumerator.Current => Current;
 
-            public bool Current => m_Instance.InternalGet(index);
+            public long Current => index;
 
             public bool MoveNext()
             {
-                if (index + 1 < m_Instance.LongCount)
+                if (index < m_Instance.Capacity)
                 {
-                    ++index;
-                    return true;
+                    long nextIndex = m_Instance.GetFirstAfter(index);
+                    if (nextIndex != -1)
+                    {
+                        index = nextIndex;
+                        return true;
+                    }
+                    else
+                    {
+                        index = m_Instance.Capacity;
+                    }
                 }
                 return false;
             }
@@ -270,6 +300,7 @@ namespace E.Collections
 
         private bool InternalIsNotEmpty()
         {
+            // if first line zero, all empty.
             return *m_Head->rankData[0].data != 0;
         }
 
@@ -280,6 +311,7 @@ namespace E.Collections
             var lastValue = value;
             var target = index;
             var countChangd = 0;
+            // search begin with last line.
             for (int i = rank - 1; i >= 0; i--)
             {
                 var rankData = rankDatas[i];
@@ -288,32 +320,37 @@ namespace E.Collections
                 // indexInRank = target / 64^exp
                 var indexInRank = target >> moveCount;
                 // offset = (target % 64^exp) / (64^(exp-1)) 
-                var offset = (int)(target & (-1L >> (64 - moveCount))) >> (moveCount - 6);
-                var ptr = rankData.data + indexInRank;
+                var offset = (int)((target & (long)(0xFFFFFFFFFFFFFFFF >> (64 - moveCount))) >> (moveCount - 6));
+                // the value where target value belongs
+                var valuePtr = rankData.data + indexInRank;
                 var compare = 1L << offset;
-                bool ori = (*ptr & compare) != 0;
+                // the original target value at offset.
+                bool ori = (*valuePtr & compare) != 0;
+                // is this target value changed?
                 bool isDiff = lastValue ^ ori;
+                // change value if different.
                 if (isDiff)
                 {
                     if (lastValue)
                     {
                         // 0 -> 1
-                        *ptr |= compare;
+                        *valuePtr |= compare;
                         countChangd = 1;
                     }
                     else
                     {
                         // 1 -> 0
-                        *ptr &= ~compare;
+                        *valuePtr &= ~compare;
                         countChangd = 2;
                     }
-                    lastValue = *ptr != 0;
+                    lastValue = *valuePtr != 0;
                 }
                 else
                 {
                     break;
                 }
             }
+            // change count if value changed.
             if (countChangd == 1)
             {
                 m_Head->count++;
@@ -326,23 +363,62 @@ namespace E.Collections
 
         private bool InternalGet(long index)
         {
+            // get from last line.
             long* ptr = m_Head->rankData[m_Head->rank - 1].data + (index >> 6);
             return (*ptr & (1L << (int)(index & 0b111111L))) != 0;
         }
 
-        private long InternalGetFirstOneIndex()
+        private long InternalGetFirst()
         {
             var rankDatas = m_Head->rankData;
             var rank = m_Head->rank;
-            var searchedIndex = 0;
-            for (int i = 0; i < rank; i++)
+            long searchedIndex = 0;
+            // search begin with first line.
+            for (int line = 0; line < rank; line++)
             {
-                var rankData = rankDatas[i];
-                var val = *(rankData.data + searchedIndex);
-                if (val == 0) return -1;
-                searchedIndex = (searchedIndex << 6) + BitUtility.GetTrailingZerosCount(val);
+                var rankData = rankDatas[line];
+                var value = *(rankData.data + searchedIndex);
+                if (value == 0) return -1;
+                searchedIndex = (searchedIndex << 6) + BitUtility.GetTrailingZerosCount(value);
             }
             return searchedIndex;
+        }
+
+        private long InternalGetFirstAfter(long afterIndex)
+        {
+            var rankDatas = m_Head->rankData;
+            if (*rankDatas[0].data == 0) return -1;
+            var rank = m_Head->rank;
+            var target = afterIndex;
+            // search begin with last line.
+            for (int line = rank - 1; line >= 0; line--)
+            {
+                var rankData = rankDatas[line];
+                int moveCount = 6 * (rank - line);
+                // exp = rank - i;
+                // indexInRank = target / 64^exp
+                var indexInRank = target >> moveCount;
+                // offset = (target % 64^exp) / (64^(exp-1))
+                var offset = (int)((target & (long)(0xFFFFFFFFFFFFFFFF >> (64 - moveCount))) >> (moveCount - 6));
+                // the value where target value belongs
+                var valuePtr = rankData.data + indexInRank;
+                // mask value, make sure all zero before and target(offset) included.?
+                var maskedVal = *valuePtr & (long)((0xFFFFFFFFFFFFFFFF << offset) & (~(1uL << offset)));
+                if (maskedVal != 0)
+                {
+                    // search begin with this line.
+                    long searchedIndex = (indexInRank << 6) + BitUtility.GetTrailingZerosCount(maskedVal);
+                    for (int nextLine = line + 1; nextLine < rank; nextLine++)
+                    {
+                        var nextRankData = rankDatas[nextLine];
+                        var nextValue = *(nextRankData.data + searchedIndex);
+                        searchedIndex = (searchedIndex << 6) + BitUtility.GetTrailingZerosCount(nextValue);
+                    }
+                    return searchedIndex;
+                }
+                // else search pre line.
+            }
+            return -1;
         }
 
         private void InternalExpand(int count)
@@ -381,7 +457,7 @@ namespace E.Collections
                                 // indexInRank = target / 64^exp
                                 var indexInRank = target >> moveCount;
                                 // offset = (target % 64^exp) / (64^(exp-1)) 
-                                var offset = (int)(target & (-1L >> (64 - moveCount))) >> (moveCount - 6);
+                                var offset = (int)(target & (long)(0xFFFFFFFFFFFFFFFF >> (64 - moveCount))) >> (moveCount - 6);
                                 var ptr = rankData.data + indexInRank;
                                 *ptr |= (1L << offset);
                             }
@@ -432,7 +508,7 @@ namespace E.Collections
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             if (m_Head == null || m_Head->existenceMark != m_ExistenceMark)
             {
-                throw new NullReferenceException($"{nameof(UnsafeBitSet)} is yet created or already disposed.");
+                throw new NullReferenceException($"{nameof(UnsafeBitMask)} is yet created or already disposed.");
             }
 #endif
         }
@@ -443,7 +519,18 @@ namespace E.Collections
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             if (index < 0 || index >= m_Head->capacity)
             {
-                throw new IndexOutOfRangeException($"{nameof(UnsafeBitSet)} index must must >= 0 && < capacity.");
+                throw new IndexOutOfRangeException($"{nameof(UnsafeBitMask)} index must must >= 0 && < capacity.");
+            }
+#endif
+        }
+
+        [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
+        private void CheckIndexAfter(long index)
+        {
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            if (index >= m_Head->capacity)
+            {
+                throw new IndexOutOfRangeException($"{nameof(UnsafeBitMask)} index must must < capacity.");
             }
 #endif
         }
