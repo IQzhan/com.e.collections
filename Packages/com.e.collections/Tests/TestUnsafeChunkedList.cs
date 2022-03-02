@@ -1,11 +1,29 @@
 using E.Collections.Unsafe;
 using NUnit.Framework;
-using UnityEngine;
 
 namespace E.Collections.Test
 {
     public unsafe class TestUnsafeChunkedList
     {
+        [Test]
+        public void TestExistenceMark()
+        {
+            int elemSize = Memory.SizeOf<int>();
+            long chunkSize = 16;
+            bool a;
+            bool b;
+            UnsafeChunkedList list;
+            UnsafeChunkedList listRef;
+            using (list = new UnsafeChunkedList(elemSize, chunkSize, Unity.Collections.Allocator.Temp))
+            {
+                listRef = list;
+                a = list.IsCreated;
+            }
+            b = listRef.IsCreated;
+            Assert.IsTrue(a);
+            Assert.IsFalse(b);
+        }
+
         [Test]
         public void TestUnsafeChunkedListAdd()
         {
@@ -20,7 +38,7 @@ namespace E.Collections.Test
                     *(int*)list.Add().Value = i;
                 }
                 CheckEqual(list, 6, chunkSize, elemSize, count);
-                foreach(var v in list)
+                foreach (var v in list)
                 {
                     Assert.AreEqual(v.Index, *(int*)v.Value);
                 }
@@ -85,7 +103,7 @@ namespace E.Collections.Test
             long chunkSize = 1 << 16;
             using (UnsafeChunkedList list = new UnsafeChunkedList(elemSize, chunkSize, Unity.Collections.Allocator.Temp))
             {
-                for(int i = 0; i < 1000; i++)
+                for (int i = 0; i < 1000; i++)
                 {
                     *(A*)list.Add().Value = new A()
                     {
