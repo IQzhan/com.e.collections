@@ -73,6 +73,10 @@ namespace E.Collections.Unsafe
 
         public long Capacity => IsCreated ? m_Head->capacity : 0;
 
+        bool ICollection.IsCreated => throw new NotImplementedException();
+
+        int ICollection.Count => throw new NotImplementedException();
+
         public UnsafeBitMask(long expectedCapacity, Allocator allocator)
         {
             m_ExistenceMark = default;
@@ -181,7 +185,9 @@ namespace E.Collections.Unsafe
 
         #region IEnumerator
 
-        public IEnumerator<long> GetEnumerator() => new Enumerator(this);
+        public Enumerator GetEnumerator() => new Enumerator(this);
+
+        IEnumerator<long> IEnumerable<long>.GetEnumerator() => new Enumerator(this);
 
         IEnumerator IEnumerable.GetEnumerator() => new Enumerator(this);
 
@@ -506,7 +512,7 @@ namespace E.Collections.Unsafe
         private void CheckExists()
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            if (m_Head == null || m_Head->existenceMark != m_ExistenceMark)
+            if (!IsCreated)
             {
                 throw new NullReferenceException($"{nameof(UnsafeBitMask)} is yet created or already disposed.");
             }

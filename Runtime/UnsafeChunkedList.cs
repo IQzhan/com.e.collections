@@ -226,7 +226,9 @@ namespace E.Collections.Unsafe
 
         #region IEnumerator
 
-        public IEnumerator<UnsafeNode> GetEnumerator() => new Enumerator(this);
+        public Enumerator GetEnumerator() => new Enumerator(this);
+
+        IEnumerator<UnsafeNode> IEnumerable<UnsafeNode>.GetEnumerator() => new Enumerator(this);
 
         IEnumerator IEnumerable.GetEnumerator() => new Enumerator(this);
 
@@ -358,7 +360,7 @@ namespace E.Collections.Unsafe
         private void CheckExists()
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            if (m_Head == null || m_Head->existenceMark != m_ExistenceMark)
+            if (!IsCreated)
             {
                 throw new NullReferenceException($"{nameof(UnsafeChunkedList)} is yet created or already disposed.");
             }
@@ -391,11 +393,11 @@ namespace E.Collections.Unsafe
         private void CheckResetElementSize(int size)
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-            if(m_Head->elementCount > 0)
+            if (m_Head->elementCount > 0)
             {
                 throw new Exception("Can not reset element size while element count is not zero.");
             }
-            if(size <= 0)
+            if (size <= 0)
             {
                 throw new ArgumentException("must bigger then 0.", "size");
             }
