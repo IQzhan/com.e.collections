@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using E.Collections.Unsafe;
 
 namespace E.Collections
 {
