@@ -168,7 +168,7 @@ namespace E.Collections.Unsafe
         public SpinLock GetLock()
         {
             CheckExists();
-            return new SpinLock(ref m_Head->lockedMark);
+            return new SpinLock(&m_Head->lockedMark);
         }
 
         public override bool Equals(object obj) => obj is UnsafeBitMask list && m_Head == list.m_Head;

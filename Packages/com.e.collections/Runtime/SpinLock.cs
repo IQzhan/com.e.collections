@@ -1,19 +1,11 @@
 using System;
 using System.Threading;
 
-namespace E.Collections
+namespace E.Collections.Unsafe
 {
     public unsafe struct SpinLock : IDisposable
     {
         private readonly int* m_Location;
-
-        public SpinLock(ref int location)
-        {
-            fixed (int* ptr = &location)
-            {
-                m_Location = ptr;
-            }
-        }
 
         public SpinLock(int* location)
         {
