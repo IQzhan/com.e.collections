@@ -13,13 +13,13 @@ namespace E.Collections
         /// </summary>
         private const long Indexes64 = 0x0218A392CD3D5DBF;
 
-        private static readonly int[] TrailingZerosCount32 = new int[32]
+        private static readonly byte[] TrailingZerosCount32 = new byte[32]
         {
             0 ,1 ,2 ,6 ,3 ,11 ,7 ,16 ,4 ,14 ,12 ,21 ,8 ,23 ,17 ,26 ,
             31 ,5 ,10 ,15 ,13 ,20 ,22 ,25 ,30 ,9 ,19 ,24 ,29 ,18 ,28 ,27
         };
 
-        private static readonly int[] TrailingZerosCount64 = new int[64]
+        private static readonly byte[] TrailingZerosCount64 = new byte[64]
         {
             0 ,1 ,2 ,7 ,3 ,13 ,8 ,19 ,4 ,25 ,14 ,28 ,9 ,34 ,20 ,40 ,
             5 ,17 ,26 ,38 ,15 ,46 ,29 ,48 ,10 ,31 ,35 ,54 ,21 ,50 ,41 ,57 ,
