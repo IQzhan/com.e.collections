@@ -22,7 +22,7 @@ namespace E.Collections.Test
         [Test]
         public void TestTrailingZerosCount64()
         {
-            Assert.AreEqual(0L, BitUtility.GetTrailingZerosCount(0L));
+            Assert.AreEqual(0, BitUtility.GetTrailingZerosCount(0L));
             for (int i = 0; i < 64; i++)
             {
                 long n = 1L << i;
