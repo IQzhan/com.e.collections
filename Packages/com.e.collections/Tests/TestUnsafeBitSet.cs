@@ -94,28 +94,15 @@ namespace E.Collections.Test
         }
 
         [Test]
-        public void TestGetFirstOneIndexAfter()
+        public void TestForEach()
         {
             int count = 1 << 18;
             using (var bitMask = new UnsafeBitMask(count, Allocator.Temp))
             {
-                long startIndex = 0;
                 for (int i = 0; i < count; i++)
                 {
                     bitMask.Set(i, (i & 1) == 1);
                 }
-                int halfCount0 = 0;
-                while (startIndex != -1)
-                {
-                    startIndex = bitMask.GetFirstAfter(startIndex);
-                    Assert.IsTrue((startIndex & 1) == 1);
-                    if(startIndex != -1)
-                    {
-                        halfCount0++;
-                    }
-                }
-                Assert.AreEqual(count / 2, halfCount0);
-
                 // foreach
                 int halfCount1 = 0;
                 foreach (var val in bitMask)
