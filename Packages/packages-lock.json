@@ -4,9 +4,7 @@
       "version": "file:com.e.collections",
       "depth": 0,
       "source": "embedded",
-      "dependencies": {
-        "com.unity.burst": "1.6.3"
-      }
+      "dependencies": {}
     },
     "com.unity.burst": {
       "version": "1.6.4",
