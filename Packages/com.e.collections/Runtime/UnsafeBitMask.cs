@@ -113,15 +113,11 @@ namespace E.Collections.Unsafe
             return InternalGetFirst();
         }
 
-        public long GetFirstAfter(long afterIndex)
+        public long GetFirst(long beginIndex)
         {
             CheckExists();
-            CheckIndexAfter(afterIndex);
-            if (afterIndex < 0)
-            {
-                return InternalGetFirst();
-            }
-            return InternalGetFirstAfter(afterIndex);
+            CheckIndex(beginIndex);
+            return InternalGetFirst(beginIndex);
         }
 
         public long GetFirstThenRemove()
@@ -135,11 +131,11 @@ namespace E.Collections.Unsafe
             return searchedIndex;
         }
 
-        public long GetFirstThenRemoveAfter(long afterIndex)
+        public long GetFirstThenRemove(long beginIndex)
         {
             CheckExists();
-            CheckIndexAfter(afterIndex);
-            long searchedIndex = (afterIndex < 0) ? InternalGetFirst() : InternalGetFirstAfter(afterIndex);
+            CheckIndex(beginIndex);
+            var searchedIndex = InternalGetFirst(beginIndex);
             if (searchedIndex != -1)
             {
                 InternalSet(searchedIndex, false);
@@ -209,9 +205,10 @@ namespace E.Collections.Unsafe
 
             public bool MoveNext()
             {
-                if (index < m_Instance.Capacity)
+                long nextIndex = index + 1;
+                if (nextIndex < m_Instance.Capacity)
                 {
-                    long nextIndex = m_Instance.GetFirstAfter(index);
+                    nextIndex = m_Instance.GetFirst(nextIndex);
                     if (nextIndex != -1)
                     {
                         index = nextIndex;
@@ -390,12 +387,12 @@ namespace E.Collections.Unsafe
             return searchedIndex;
         }
 
-        private long InternalGetFirstAfter(long afterIndex)
+        private long InternalGetFirst(long beginIndex)
         {
             var rankDatas = m_Head->rankData;
             if (*rankDatas[0].data == 0) return -1;
             var rank = m_Head->rank;
-            var target = afterIndex;
+            var target = beginIndex;
             // search begin with last line.
             for (int line = rank - 1; line >= 0; line--)
             {
@@ -408,8 +405,8 @@ namespace E.Collections.Unsafe
                 var offset = (int)((target & (long)(0xFFFFFFFFFFFFFFFF >> (64 - moveCount))) >> (moveCount - 6));
                 // the value where target value belongs
                 var valuePtr = rankData.data + indexInRank;
-                // mask value, make sure all zero before and target(offset) included.?
-                var maskedVal = *valuePtr & (long)((0xFFFFFFFFFFFFFFFF << offset) & (~(1uL << offset)));
+                // mask value, make sure all zero before.
+                var maskedVal = *valuePtr & (long)(0xFFFFFFFFFFFFFFFF << offset);
                 if (maskedVal != 0)
                 {
                     // search begin with this line.
@@ -526,17 +523,6 @@ namespace E.Collections.Unsafe
             if (index < 0 || index >= m_Head->capacity)
             {
                 throw new IndexOutOfRangeException($"{nameof(UnsafeBitMask)} index must must >= 0 && < capacity.");
-            }
-#endif
-        }
-
-        [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
-        private void CheckIndexAfter(long index)
-        {
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
-            if (index >= m_Head->capacity)
-            {
-                throw new IndexOutOfRangeException($"{nameof(UnsafeBitMask)} index must must < capacity.");
             }
 #endif
         }
