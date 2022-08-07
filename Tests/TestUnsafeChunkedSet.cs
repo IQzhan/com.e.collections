@@ -1,6 +1,5 @@
 using E.Collections.Unsafe;
 using NUnit.Framework;
-using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 using UnityEngine;
@@ -146,7 +145,6 @@ namespace E.Collections.Test
             }
         }
 
-        [BurstCompile]
         struct SetJob0 : IJobParallelFor
         {
             public UnsafeChunkedSet<int> set;
@@ -165,7 +163,6 @@ namespace E.Collections.Test
             }
         }
 
-        //[BurstCompile]
         struct SetJob1 : IJobParallelFor
         {
             public UnsafeChunkedSet<int> set;

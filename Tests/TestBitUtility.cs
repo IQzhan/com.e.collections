@@ -1,8 +1,6 @@
 using NUnit.Framework;
 using System;
 using System.Text;
-using Unity.Burst;
-using Unity.Jobs;
 
 namespace E.Collections.Test
 {
