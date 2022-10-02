@@ -1,6 +1,8 @@
 ﻿using E.Collections.Unsafe;
 using NUnit.Framework;
+using System.Collections.Generic;
 using Unity.Collections;
+using UnityEngine;
 
 namespace E.Collections.Test
 {
@@ -111,6 +113,40 @@ namespace E.Collections.Test
                     halfCount1++;
                 }
                 Assert.AreEqual(count / 2, halfCount1);
+            }
+        }
+
+        [Test]
+        public void TestRandom()
+        {
+            int maxNum = 10000;
+            int count = 100;
+            HashSet<int> set = new HashSet<int>(count);
+            for (int i = 0; i < count; i++)
+            {
+                int value = Random.Range(0, maxNum);
+                while (set.Contains(value))
+                {
+                    value = Random.Range(0, maxNum);
+                }
+                set.Add(value);
+            }
+            using (var bitMask = new UnsafeBitMask(maxNum, Allocator.Temp))
+            {
+                foreach (int value in set)
+                {
+                    bitMask.Set(value, true);
+                }
+                Assert.AreEqual(bitMask.Count, count);
+                foreach (var index in bitMask)
+                {
+                    Assert.IsTrue(set.Contains((int)index));
+                }
+                foreach (var index in bitMask)
+                {
+                    bitMask.Set(index, false);
+                }
+                Assert.AreEqual(bitMask.Count, 0);
             }
         }
     }
