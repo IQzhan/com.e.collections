@@ -1,7 +1,7 @@
 {
   "name": "com.e.collections",
   "displayName": "Collections",
-  "version": "0.8.4",
+  "version": "0.8.5",
   "unity": "2019.3",
   "license": "MIT",
   "keywords": [
@@ -15,5 +15,6 @@
   "author": {
     "name": "ZhanQI"
   },
-  "hideInEditor": false
+  "hideInEditor": false,
+  "description": "Unsafe collections."
 }

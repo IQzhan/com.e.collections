@@ -419,7 +419,12 @@ namespace E.Collections.Unsafe
                     }
                     return searchedIndex;
                 }
-                // else search pre line.
+                else
+                {
+                    // else skip this empty range.
+                    target = (indexInRank + 1) << moveCount;
+                }
+                // continue search pre line.
             }
             return -1;
         }
