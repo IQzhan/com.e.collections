@@ -33,7 +33,7 @@ namespace E.Collections.Unsafe
             => m_Mark == other.m_Mark;
 
         public override int GetHashCode()
-            => HashCode.Combine(m_Mark);
+            => m_Mark;
 
         public static bool operator ==(ExistenceMark left, ExistenceMark right)
             => left.m_Mark == right.m_Mark;

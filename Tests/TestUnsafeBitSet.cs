@@ -121,7 +121,7 @@ namespace E.Collections.Test
         {
             int maxNum = 10000;
             int count = 100;
-            HashSet<int> set = new HashSet<int>(count);
+            HashSet<int> set = new HashSet<int>();
             for (int i = 0; i < count; i++)
             {
                 int value = Random.Range(0, maxNum);
