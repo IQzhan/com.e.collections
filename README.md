@@ -7,4 +7,4 @@
 5. UnsafeBitMask
 ### Install
 1. Window -> PackageManager -> + -> Add package from git URL.
-2. Enter https://github.com/IQzhan/com.e.collections.git#v0.8.5 and click Add.
+2. Enter https://github.com/IQzhan/com.e.collections.git#v0.8.6 and click Add.

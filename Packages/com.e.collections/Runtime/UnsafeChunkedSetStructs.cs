@@ -51,7 +51,12 @@ namespace E.Collections.Unsafe
             => (m_NodeStructSize == other.m_NodeStructSize) && (m_Node == other.m_Node);
 
         public override int GetHashCode()
-            => HashCode.Combine(m_NodeStructSize, (long)m_Node);
+        {
+            int hashCode = 469229070;
+            hashCode = hashCode * -1521134295 + m_NodeStructSize.GetHashCode();
+            hashCode = hashCode * -1521134295 + ((long)m_Node).GetHashCode();
+            return hashCode;
+        }
 
         public static bool operator ==(UnsafeSetNode<TKey> left, UnsafeSetNode<TKey> right)
             => left.Equals(right);
