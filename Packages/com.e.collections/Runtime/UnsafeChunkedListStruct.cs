@@ -28,7 +28,12 @@ namespace E.Collections.Unsafe
             => (m_Index == other.m_Index) && (m_Value == other.m_Value);
 
         public override int GetHashCode()
-            => HashCode.Combine(m_Index, (long)m_Value);
+        {
+            int hashCode = 39587373;
+            hashCode = hashCode * -1521134295 + m_Index.GetHashCode();
+            hashCode = hashCode * -1521134295 + ((long)m_Value).GetHashCode();
+            return hashCode;
+        }
 
         public static bool operator ==(UnsafeNode left, UnsafeNode right)
             => left.Equals(right);
